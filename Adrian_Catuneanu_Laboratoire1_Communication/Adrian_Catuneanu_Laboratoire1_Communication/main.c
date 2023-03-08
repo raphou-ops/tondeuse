@@ -32,7 +32,8 @@ char variable[8];
 char *input_cr;
 uint8_t etat = 0;
 char msg[32];
-uint16_t s = 0;
+uint8_t pos = 0;
+uint8_t row=0;
 
 unsigned int i;
 char buffer [sizeof(unsigned int)*8+1];
@@ -47,7 +48,7 @@ int main(void)
 	// 	BT1_INIT();
 	// 	BT2_INIT();
 	lcdInit();
-	usartInit(115200,16000000);
+	usartInit(9600,16000000);
 	//usartSendString("adrian");
 	//lcdPuts("Adrian");
 	TCCR0B |= (1<<CS01) | (1<<CS00); //avec diviseur de clock /64.
@@ -64,10 +65,10 @@ int main(void)
 			//usartSendString("adrian");
 			//usartSendString(" ");
 			//PORTB |= 1<<7;
-			if(PORTB | (1<<7) == 1)
+			/*if(PORTB | (1<<7) == 1)
 			PORTB = PORTB & ~(1<<7);
 			else
-			PORTB = PORTB | (1<<7);
+			PORTB = PORTB | (1<<7);*/
 			refreshBouton = 0;
 			
 			// 			if((BT1_APPUYE())&&(etatPrecedant==1))
@@ -81,31 +82,43 @@ int main(void)
 			// 				usartSendByte('2');
 			// 			}
 			// 				etatPrecedant2 = !(BT2_APPUYE());
+			if(pos>=16)
+			{
+				pos=0;
+				row=!row;
+			
+			}
+			
 		}
+		
 		if(usartRxAvailable())
 		{
 			i = usartRemRxData();
 
 			// 			if(i == 0xB5)
 			// 				lcdPuts(utoa(i,buffer,16));
-			if(i == 0xB5)
+			
+			//lcdPuts(utoa(i,buffer,16));
+			
+			/*if(i == 0xB5)
 			{
 				lcdPuts(utoa(i,buffer,16));
-				lcdSetPos(s,0);
-				s = s+2;
+				lcdSetPos(pos,row);
+				pos = pos+2;
+				
 			}
 			else if(i == 0x62)
 			{
 				lcdPuts(utoa(i,buffer,16));
-				lcdSetPos(s,0);
-				s = s+2;
+				lcdSetPos(pos,row);
+				pos = pos+2;
 			}
 			else if(i == 0x01)
 			{
 				lcdPuts(utoa(i,buffer,16));
-				lcdSetPos(s,0);
-				s = s+2;
-			}
+				lcdSetPos(pos,row);
+				pos = pos+2;
+			}*/
 			
 			
 			

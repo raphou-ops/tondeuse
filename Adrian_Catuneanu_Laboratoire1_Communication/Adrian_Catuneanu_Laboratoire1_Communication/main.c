@@ -34,10 +34,14 @@ uint8_t etat = 0;
 char msg[32];
 uint8_t pos = 0;
 uint8_t row=0;
+uint8_t cnt;
 
 unsigned int i;
 char buffer [sizeof(unsigned int)*8+1];
-
+uint8_t trameEnable[18]={0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x07,0x00,0x01,0x00,0x00,0x00,0x00,0x18,0xE1};
+unsigned char trameDisable[18]={0xb5,0x62,0x06,0x01,0x08,0x00,0x01,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x17,0xdc};
+uint8_t trameSave[21]={0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x21, 0xAF};
+uint8_t tmp;
 // #define BT1_APPUYE()	((PINB & (1<<7))==0)
 // #define BT2_APPUYE()	((PIND &(1<<6))==0)
 // #define BT1_INIT() 	    PORTB |= (1<<7)
@@ -49,8 +53,7 @@ int main(void)
 	// 	BT2_INIT();
 	lcdInit();
 	usartInit(9600,16000000);
-	//usartSendString("adrian");
-	//lcdPuts("Adrian");
+	
 	TCCR0B |= (1<<CS01) | (1<<CS00); //avec diviseur de clock /64.
 	TCCR0A |= (1<<WGM01);//Configuration du timer 0 en CTC
 	TIMSK0 |= (1<<OCIE0A);//Output Compare Match A Interrupt Enable.
@@ -59,48 +62,62 @@ int main(void)
 	
 	while (1)
 	{
+		if(usartRxAvailable())
+		{
+			tmp=usartRemRxData();
+			lcdPuts(utoa(tmp,buffer,16));
+			pos+=2;
+			lcdSetPos(pos,row);
+			
+			/*switch(tmp)
+			{
+				
+				case 0xB5:
+				lcdPuts(utoa(tmp,buffer,16));
+				lcdSetPos(pos,row);
+				pos+=2;
+				break;
+				case 0x62:
+				lcdPuts(utoa(tmp,buffer,16));
+				lcdSetPos(pos,row);
+				pos = pos+2;
+				break;
+				case 0x01:
+				lcdPuts(utoa(tmp,buffer,16));
+				lcdSetPos(pos,row);
+				pos = pos+2;
+				break;
+				case 0x07:
+				lcdPuts(utoa(tmp,buffer,16));
+				lcdSetPos(pos,row);
+				pos = pos+2;
+				break;
+			}*/
+		}
 		
 		if(refreshBouton==1)
 		{
-			//usartSendString("adrian");
-			//usartSendString(" ");
-			//PORTB |= 1<<7;
-			/*if(PORTB | (1<<7) == 1)
-			PORTB = PORTB & ~(1<<7);
-			else
-			PORTB = PORTB | (1<<7);*/
+		//usartSendBytes(trameSave,21);
 			refreshBouton = 0;
-			
-			// 			if((BT1_APPUYE())&&(etatPrecedant==1))
-			// 			{
-			// 				usartSendByte('1');
-			// 			}
-			// 			etatPrecedant = !(BT1_APPUYE());
-			//
-			// 			if((BT2_APPUYE())&&(etatPrecedant2==1))
-			// 			{
-			// 				usartSendByte('2');
-			// 			}
-			// 				etatPrecedant2 = !(BT2_APPUYE());
+		
 			if(pos>=16)
 			{
 				pos=0;
 				row=!row;
 			
 			}
-			
+		//	usartSendBytes(trameDisable,sizeof(trameDisable));
 		}
 		
-		if(usartRxAvailable())
+		/*if(usartRxAvailable())
 		{
 			i = usartRemRxData();
 
-			// 			if(i == 0xB5)
-			// 				lcdPuts(utoa(i,buffer,16));
+		
 			
 			//lcdPuts(utoa(i,buffer,16));
 			
-			/*if(i == 0xB5)
+			if(i == 0xB5)
 			{
 				lcdPuts(utoa(i,buffer,16));
 				lcdSetPos(pos,row);
@@ -118,30 +135,12 @@ int main(void)
 				lcdPuts(utoa(i,buffer,16));
 				lcdSetPos(pos,row);
 				pos = pos+2;
-			}*/
+			}
 			
 			
 			
-			
-			//  			variable[1] = 0;
-			//  			input_cr=(char*) &variable;
-			//  			if(variable == '\r' || variable == '\n')
-			//  			{
-			// 				etat++;
-			//
-			// 				if(etat == 1)
-			// 				{
-			// 					lcdSetPos(0,0);
-			// 				}
-			//
-			// 				if(etat == 2)
-			// 				{
-			// 					lcdSetPos(0,1);
-			// 					etat = 0;
-			// 				}
-			// 			}
-			// 			else
-		}
+		
+		}*/
 	}
 }
 /**

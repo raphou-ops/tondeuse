@@ -56,8 +56,7 @@ void usartInit(uint32_t baudRate, uint32_t fcpu)
 {
 	
 	UCSR1B = (1<<RXEN1)|(1<<TXEN1);//active la transmission et la reception
-	//UCSR1C = 0b00100110;//met en mode 8 bit parite paire
-	UCSR1C = (1<<UPM11)|(1<<UCSZ11)|(1<<UCSZ10);//met en mode 8 bit parite paire
+	UCSR1C=0b00000110;
 	UBRR1 = fcpu / (16.0*baudRate) - 0.5;//calcul de UBBR1 pour avoir une vitesse de 10000 bauds
 	UCSR1B |= (1<<RXCIE1);//active l'interruption pour la reception
 	sei();

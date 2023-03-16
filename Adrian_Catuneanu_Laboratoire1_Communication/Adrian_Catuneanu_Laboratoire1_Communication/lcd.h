@@ -14,13 +14,13 @@
 #define F_CPU 16000000 //fixer la vitesse du microprocesseur
 #include <util/delay.h> //inclure la librairie publique delay
 
-#define LCD_RS_INIT()    DDRH |= (1<<4)//PD1 pin 10
-#define LCD_RS_ON()      PORTH |= (1<<4)
-#define LCD_RS_OFF()     PORTH &= ~(1<<4)                                                       
+#define LCD_RS_INIT()    DDRA |= (1<<0)//PD1 pin 10
+#define LCD_RS_ON()      PORTA |= (1<<0)
+#define LCD_RS_OFF()     PORTA &= ~(1<<0)                                                       
 
-#define LCD_E_INIT()     DDRH |= (1<<3)//PD0 pin 9
-#define LCD_E_ON()       PORTH |= (1<<3)
-#define LCD_E_OFF()      PORTH &= ~(1<<3)
+#define LCD_E_INIT()     DDRA |= (1<<1)//PD0 pin 9
+#define LCD_E_ON()       PORTA |= (1<<1)
+#define LCD_E_OFF()      PORTA &= ~(1<<1)
 
 #define LCD_DB4_INIT()   DDRE |= (1<<3)//PD4 pin 8
 #define LCD_DB4_ON()     PORTE |= (1<<3)

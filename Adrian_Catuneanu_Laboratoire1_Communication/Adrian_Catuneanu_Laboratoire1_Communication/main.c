@@ -22,7 +22,16 @@
 #include <avr/interrupt.h>
 #include "lcd.h"
 #include "USART.h"
+#include "ZEDF9P.h"
 #include <stdlib.h>
+
+#define USB_ON 1
+#define USB_OFF 0
+#define USART1_ON 1
+#define USART1_OFF 0
+#define PVT 7
+#define POLSSH 2
+#define ODO 6
 
 volatile uint16_t cntDixiemeDeSec = 0;
 volatile uint8_t refreshBouton = 1;
@@ -35,112 +44,127 @@ char msg[32];
 uint8_t pos = 0;
 uint8_t row=0;
 uint8_t cnt;
+float lat = 0;
+float lon = 0;
 
 unsigned int i;
 char buffer [sizeof(unsigned int)*8+1];
-uint8_t trameEnable[18]={0xB5,0x62,0x06,0x01,0x08,0x00,0x01,0x07,0x00,0x01,0x00,0x00,0x00,0x00,0x18,0xE1};
-unsigned char trameDisable[18]={0xb5,0x62,0x06,0x01,0x08,0x00,0x01,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x17,0xdc};
-uint8_t trameSave[21]={0xB5, 0x62, 0x06, 0x09, 0x0D, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x21, 0xAF};
+
 uint8_t tmp;
-// #define BT1_APPUYE()	((PINB & (1<<7))==0)
-// #define BT2_APPUYE()	((PIND &(1<<6))==0)
-// #define BT1_INIT() 	    PORTB |= (1<<7)
-// #define BT2_INIT() 	    PORTD |= (1<<6)//pull ups intern
+
+uint16_t calculerCRC(uint8_t*trame,uint8_t size);	
+void envoieConfigMsg( uint8_t id,uint8_t etatUart1,uint8_t etatUsb);
+void envoieConfigRate(uint8_t frequence);
+void envoieConfigPortUart1(uint32_t baudrate);
+
+uint16_t calculerCRC(uint8_t*trame,uint8_t size)
+{
+	uint8_t checksumA=0;
+	uint8_t checksumB=0;
+	uint16_t retour=0;
+	size=size+6;
+	for(uint8_t n=2;n<size;n++)
+	{
+		checksumA = checksumA + trame[n];
+		checksumB = checksumB + checksumA;
+	}
+	retour=checksumB<<8|checksumA;
+	return retour;
+}
+
+void envoieConfigPortUart1(uint32_t baudrate)
+{
+	//{0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xD0, 0x08, 0x00, 0x00, 0x80, 0x25, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x9A, 0x79}
+	uint16_t crc=0;
+	uint8_t trameConfigEnvoi[28]={0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xD0, 0x08, 0x00, 0x00, (baudrate&0xFF),(baudrate>>8&0xFF),(baudrate>>16&0xFF), (baudrate>>32&0xFF), 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0, 0};
+	crc=calculerCRC(trameConfigEnvoi,20);
+	trameConfigEnvoi[26]=crc&0xFF;
+	trameConfigEnvoi[27]=crc>>8;
+	usartSendBytes(trameConfigEnvoi,28);
+}
+
+void envoieConfigRate(uint8_t frequence)
+{
+	//{0xB5,0x62,0x06,0x08,0x06,0x00,0xE8,0x03,0x01,0x00,0x01,0x00,0x01,0x39}
+	uint16_t crc=0;
+	uint16_t freq=1000/frequence;
+	uint8_t trameConfigEnvoi[14]={0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, (freq&0xFF),(freq>>8), 0x01,0x00 , 0x01, 0x00, 0, 0};
+	crc=calculerCRC(trameConfigEnvoi,6);
+	trameConfigEnvoi[12]=crc&0xFF;
+	trameConfigEnvoi[13]=crc>>8;
+	usartSendBytes(trameConfigEnvoi,14);	
+}
+
+void envoieConfigMsg(uint8_t id,uint8_t etatUart1,uint8_t etatUsb)
+{
+	
+	uint16_t crc=0;
+	uint8_t trameConfigEnvoi[16]={0xB5, 0x62, 0x06, 0x01, 0x08, 0x00, 0x01, id, 0x00, etatUart1, 0x00, etatUsb, 0x00, 0x00, 0, 0};
+	crc=calculerCRC(trameConfigEnvoi,8);
+	trameConfigEnvoi[14]=crc&0xFF;
+	trameConfigEnvoi[15]=crc>>8;
+	usartSendBytes(trameConfigEnvoi,16);
+	
+}		
+
 int main(void)
 {
-	DDRB = DDRB | (1<<7);
+	DDRB |=(1<<7);//led on board
 	// 	BT1_INIT();
 	// 	BT2_INIT();
 	lcdInit();
 	usartInit(9600,16000000);
-	
+	lcdPuts("Hello world");
 	TCCR0B |= (1<<CS01) | (1<<CS00); //avec diviseur de clock /64.
 	TCCR0A |= (1<<WGM01);//Configuration du timer 0 en CTC
 	TIMSK0 |= (1<<OCIE0A);//Output Compare Match A Interrupt Enable.
 	OCR0A = 249;//Top a la valeur 249 afin de obtenir un periode de 1ms fixe.
 	sei();//fait appel aux interruptions global
 	
+	envoieConfigPortUart1(9600);
+	envoieConfigRate(1);
+	envoieConfigMsg(PVT,USART1_ON,USART1_OFF);
+	
+	
+	
+	//pour les pwm du pont H 1 driver
+	/*DDRH|=(1<<3)|(1<<4);
+	TCCR4A=0b10100011;
+	TCCR4B=0b00011001;
+	OCR4A=250;
+	OCR4B=240;*/
+	
 	while (1)
 	{
+// 		if(pos>=16)
+// 		{
+// 			pos=0;
+// 			row=!row;
+// 			
+// 		}
 		if(usartRxAvailable())
 		{
 			tmp=usartRemRxData();
-			lcdPuts(utoa(tmp,buffer,16));
-			pos+=2;
-			lcdSetPos(pos,row);
-			
-			/*switch(tmp)
+			if(parseRxUbxNavPvt(tmp))
 			{
-				
-				case 0xB5:
-				lcdPuts(utoa(tmp,buffer,16));
-				lcdSetPos(pos,row);
-				pos+=2;
-				break;
-				case 0x62:
-				lcdPuts(utoa(tmp,buffer,16));
-				lcdSetPos(pos,row);
-				pos = pos+2;
-				break;
-				case 0x01:
-				lcdPuts(utoa(tmp,buffer,16));
-				lcdSetPos(pos,row);
-				pos = pos+2;
-				break;
-				case 0x07:
-				lcdPuts(utoa(tmp,buffer,16));
-				lcdSetPos(pos,row);
-				pos = pos+2;
-				break;
-			}*/
+				PORTB^=(1<<7);
+				lcdClearScreen();
+				lon = getNavPvtLon();
+				lat = getNavPvtLat();
+				sprintf(msg, "%f", (lat*1e-7));
+				lcdSetPos(0,0);
+				lcdPuts(msg);
+				sprintf(msg, "%f", (lon*1e-7));
+				lcdSetPos(0,1);
+				lcdPuts(msg);
+			}
 		}
-		
 		if(refreshBouton==1)
 		{
-		//usartSendBytes(trameSave,21);
 			refreshBouton = 0;
-		
-			if(pos>=16)
-			{
-				pos=0;
-				row=!row;
-			
-			}
-		//	usartSendBytes(trameDisable,sizeof(trameDisable));
 		}
 		
-		/*if(usartRxAvailable())
-		{
-			i = usartRemRxData();
-
 		
-			
-			//lcdPuts(utoa(i,buffer,16));
-			
-			if(i == 0xB5)
-			{
-				lcdPuts(utoa(i,buffer,16));
-				lcdSetPos(pos,row);
-				pos = pos+2;
-				
-			}
-			else if(i == 0x62)
-			{
-				lcdPuts(utoa(i,buffer,16));
-				lcdSetPos(pos,row);
-				pos = pos+2;
-			}
-			else if(i == 0x01)
-			{
-				lcdPuts(utoa(i,buffer,16));
-				lcdSetPos(pos,row);
-				pos = pos+2;
-			}
-			
-			
-			
-		
-		}*/
 	}
 }
 /**

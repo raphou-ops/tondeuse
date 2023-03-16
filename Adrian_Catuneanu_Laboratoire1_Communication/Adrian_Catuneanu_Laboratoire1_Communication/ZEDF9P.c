@@ -34,7 +34,7 @@ uint8_t checksumA = 0;
 uint8_t checksumB = 0;
 uint8_t retour = 0;
 uint8_t length = 0;
-
+char test[1]={'1'};
 long longitude = 0;
 long latitude = 0;
 

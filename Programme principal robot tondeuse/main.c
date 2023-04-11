@@ -69,10 +69,10 @@ uint8_t triAdc=0;
 int vitesseMoteurG=0;
 int vitesseMoteurD=0;
 
-#define BT1 ((PINA&(1<<0))==0)
-#define BT2 ((PINA&(1<<1))==0)
-#define BT3 ((PINA&(1<<2))==0)
-#define BT4 ((PINA&(1<<3))==0)
+#define BT2() ((PINA&(1<<0))==0)
+#define BT1() ((PINA&(1<<1))==0)
+#define BT4() ((PINA&(1<<2))==0)
+#define BT3() ((PINA&(1<<3))==0)
 
 #define JOYSTICK_X 1
 #define JOYSTICK_Y 2
@@ -80,14 +80,23 @@ int vitesseMoteurD=0;
 
 char msg[8];
 
+/*Variables clavier matriciel*/
+char key = 0;
+char lastKey = 0;
+uint8_t cntPassword = 0;
+char password[4] = {'1','2','3','4'};
+char essaiUser[4];
+char passwordValid = 0;
+char mode = 0;
+
+uint8_t tab[2]={'A','T'};
+
 void adcInit();//initialise l'adc
 void moteurInit();
+char lireClavier();
 
 void adcInit()
 {
-	//adc1=vrx
-	//adc2=vry
-	//adc8=lecture batterie.
 	ADMUX|=(1<<REFS0);//10 bit et compare avec vcc
 	ADCSRA|=(1<<ADEN)|(1<<ADIE)|(1<<ADPS2);//divise le clock par 32 et active l'adc
 
@@ -111,30 +120,86 @@ void moteurInit()
 	OCR5A=1024;//top
 	OCR5B=90;
 	OCR5C=0;
-	
-	sei();
+}
+char lireClavier()
+{
+	char digit = 0;
+	if(BT1())
+	{
+		digit = '1';
+	}
+	else if(BT2())
+	{
+		digit = '2';
+	}
+	else if(BT3())
+	{
+		digit = '3';
+	}
+	else if(BT4())
+	{
+		digit = '4';
+	}
+	return digit;
 }
 
 int main(void)
 {
 	lcdInit();
 	
+	PORTA|=0x0F;//initclavier
+	
+	_delay_ms(100);
+	
+	lcdPuts("Enter Password:");
+	lcdSetPos(0,1);
+	do{
+		key = lireClavier();
+		
+		if((key)&&(!lastKey))
+		{
+			lcdSetPos(cntPassword,1);
+			essaiUser[cntPassword++] = key;
+			lcdPutc(key);
+		}
+		lastKey = key;
+		
+		if(cntPassword == 4)
+		{
+			for(uint8_t index = 0; index<4; index++)
+			{
+				if(essaiUser[index] == password[index])
+				{
+					passwordValid = 1;
+				}
+				else
+				{
+					lcdClearScreen();
+					lcdPuts("Invalid password");
+					lcdSetPos(0,1);
+					cntPassword = 0;
+					passwordValid = 0;
+				}
+			}
+		}
+	}while(!passwordValid);
+	
 	adcInit();
 	moteurInit();
+	
+	ADCSRA |= (1<<ADSC); //debut conversion ADC.
 	
 	TCCR0B |= (1<<CS01) | (1<<CS00); //avec diviseur de clock /64.
 	TCCR0A |= (1<<WGM01);//Configuration du timer 0 en CTC
 	TIMSK0 |= (1<<OCIE0A);//Output Compare Match A Interrupt Enable.
 	OCR0A = 249;//Top a la valeur 249 afin de obtenir un periode de 1ms fixe.
-	sei();
 	
 	PORTJ |= 0b00011000;//active pull-up sur PB4 et PB5
 	PCICR |= 0b00000010;//active la lecture sur PCINT4 et PCINT5
 	PCMSK1 |= 0b00110000;//active les interruption sur PCINT4 et PCINT5
-	sei();
 	
-	usart0Init(115200,16000000);
 	usartGpsInit(9600,16000000);
+	usart0Init(115200,16000000);
 	usart2Init(9600,16000000);
 	
 	envoieConfigPortUart1(9600);
@@ -144,6 +209,8 @@ int main(void)
 
 	while (1)
 	{
+		
+		
 		if(usart0RxAvailable())
 		{
 			dataLiDAR = usart0RemRxData();
@@ -225,6 +292,13 @@ int main(void)
 				OCR4C=0;
 				OCR5C=(VIT_MIN+vitesseMoteurG);
 			}
+			key = lireClavier();
+			
+			if((key)&&(!lastKey))
+			{
+				mode = key;
+			}
+			lastKey = key;
 		}
 		if(refreshDist)
 		{
@@ -245,9 +319,9 @@ int main(void)
 ISR(TIMER0_COMPA_vect)//Quand l'interruption globale est appeller le programme vient executer le vecteur Comparatif.
 {
 	cntDixiemeDeSec++;
-	if(cntDixiemeDeSec <= 100)
+	if(cntDixiemeDeSec <= 200)
 	{
-		cntDixiemeDeSec -= 100;
+		cntDixiemeDeSec -= 200;
 		refreshAffichage = 1;
 	}
 }
@@ -273,38 +347,38 @@ ISR(ADC_vect)
 	switch(triAdc)
 	{
 		case 0x0:
-		sprintf(msg,"p:%d",receptionAdc);
-		lcdSetPos(8,0);
-		lcdPuts(msg);
+		// 		sprintf(msg,"p:%d",receptionAdc);
+		// 		lcdSetPos(8,0);
+		// 		lcdPuts(msg);
 		ADMUX=0x41;
 		break;
 
 		case 0x1:
 		joysticX=receptionAdc-512;
-		lcdSetPos(0,0);
-		lcdPuts("      ");
-		sprintf(msg,"x:%d",joysticX);
-		lcdSetPos(0,0);
-		lcdPuts(msg);
+		// 		lcdSetPos(0,0);
+		// 		lcdPuts("      ");
+		// 		sprintf(msg,"x:%d",joysticX);
+		// 		lcdSetPos(0,0);
+		// 		lcdPuts(msg);
 
 		ADMUX=0x42;
 		break;
 
 		case 0x2:
 		joysticY=receptionAdc-512;
-		sprintf(msg,"y:%d",joysticY);
-		lcdSetPos(0,1);
-		lcdPuts("      ");
-		lcdSetPos(0,1);
-		lcdPuts(msg);
+		// 		sprintf(msg,"y:%d",joysticY);
+		// 		lcdSetPos(0,1);
+		// 		lcdPuts("      ");
+		// 		lcdSetPos(0,1);
+		// 		lcdPuts(msg);
 		ADMUX=0x40;
 		ADCSRB|=(1<<MUX5);
 		break;
 
 		case 0x20:
-		sprintf(msg,"b:%d",receptionAdc);
-		lcdSetPos(8,1);
-		lcdPuts(msg);
+		// 		sprintf(msg,"b:%d",receptionAdc);
+		// 		lcdSetPos(8,1);
+		// 		lcdPuts(msg);
 		ADMUX=0x40;
 		ADCSRB&=~(1<<MUX5);
 		break;

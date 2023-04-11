@@ -83,9 +83,10 @@ trameGpsNavPvtValide
 rxBufferLiDAR       0x40              USART0.o
 trameLidar          0x9               LiDAR.o
 msgGpsLon           0x10              main.o
-txBufferBluetooth   0x20              USART2.o
+txBufferBluetooth   0x40              USART2.o
 _usartRxTmpLiDAR    0x1               USART0.o
-rxBufferBluetooth   0x20              USART2.o
+rxBufferBluetooth   0x40              USART2.o
+essaiUser           0x4               main.o
 msgLiDAR            0x14              main.o
 msgTime             0x14              main.o
 dataGps             0x1               main.o
@@ -146,8 +147,8 @@ Discarded input sections
                 0x00000000        0x6 USART2.o
  .text.usart2RemRxData
                 0x00000000       0x40 USART2.o
- .text.usart2SendBytes
-                0x00000000       0x3a USART2.o
+ .text.usart2SendString
+                0x00000000       0x34 USART2.o
  .bss.cntStrBluetooth
                 0x00000000        0x1 USART2.o
  .bss.nbOctetBluetooth
@@ -490,7 +491,7 @@ END GROUP
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x24fe
+.text           0x00000000     0x2516
  *(.vectors)
  .vectors       0x00000000       0xe4 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega2560/avr6/crtatmega2560.o
                 0x00000000                __vector_default
@@ -629,180 +630,183 @@ END GROUP
  .text.adcInit  0x00000522       0x2c main.o
                 0x00000522                adcInit
  .text.moteurInit
-                0x0000054e       0x68 main.o
+                0x0000054e       0x66 main.o
                 0x0000054e                moteurInit
- .text.main     0x000005b6      0x3de main.o
-                0x000005b6                main
+ .text.lireClavier
+                0x000005b4       0x24 main.o
+                0x000005b4                lireClavier
+ .text.main     0x000005d8      0x4ca main.o
+                0x000005d8                main
  .text.__vector_21
-                0x00000994       0x56 main.o
-                0x00000994                __vector_21
+                0x00000aa2       0x56 main.o
+                0x00000aa2                __vector_21
  .text.__vector_10
-                0x000009ea       0x90 main.o
-                0x000009ea                __vector_10
+                0x00000af8       0x90 main.o
+                0x00000af8                __vector_10
  .text.__vector_29
-                0x00000a7a      0x1ce main.o
-                0x00000a7a                __vector_29
+                0x00000b88       0xd2 main.o
+                0x00000b88                __vector_29
  .text.usart0Init
-                0x00000c48       0x74 USART0.o
-                0x00000c48                usart0Init
+                0x00000c5a       0x74 USART0.o
+                0x00000c5a                usart0Init
  .text.usart0RxAvailable
-                0x00000cbc        0x6 USART0.o
-                0x00000cbc                usart0RxAvailable
+                0x00000cce        0x6 USART0.o
+                0x00000cce                usart0RxAvailable
  .text.usart0RemRxData
-                0x00000cc2       0x40 USART0.o
-                0x00000cc2                usart0RemRxData
+                0x00000cd4       0x40 USART0.o
+                0x00000cd4                usart0RemRxData
  .text.__vector_26
-                0x00000d02       0x6a USART0.o
-                0x00000d02                __vector_26
+                0x00000d14       0x6a USART0.o
+                0x00000d14                __vector_26
  .text.__vector_25
-                0x00000d6c       0x66 USART0.o
-                0x00000d6c                __vector_25
+                0x00000d7e       0x66 USART0.o
+                0x00000d7e                __vector_25
  .text.usartGpsSendByte
-                0x00000dd2       0x48 USART1.o
-                0x00000dd2                usartGpsSendByte
+                0x00000de4       0x48 USART1.o
+                0x00000de4                usartGpsSendByte
  .text.usartGpsInit
-                0x00000e1a       0x74 USART1.o
-                0x00000e1a                usartGpsInit
+                0x00000e2c       0x74 USART1.o
+                0x00000e2c                usartGpsInit
  .text.usartGpsRxAvailable
-                0x00000e8e        0x6 USART1.o
-                0x00000e8e                usartGpsRxAvailable
+                0x00000ea0        0x6 USART1.o
+                0x00000ea0                usartGpsRxAvailable
  .text.usartGpsRemRxData
-                0x00000e94       0x40 USART1.o
-                0x00000e94                usartGpsRemRxData
+                0x00000ea6       0x40 USART1.o
+                0x00000ea6                usartGpsRemRxData
  .text.usartGpsSendBytes
-                0x00000ed4       0x38 USART1.o
-                0x00000ed4                usartGpsSendBytes
+                0x00000ee6       0x38 USART1.o
+                0x00000ee6                usartGpsSendBytes
  .text.__vector_37
-                0x00000f0c       0x6a USART1.o
-                0x00000f0c                __vector_37
+                0x00000f1e       0x6a USART1.o
+                0x00000f1e                __vector_37
  .text.__vector_36
-                0x00000f76       0x66 USART1.o
-                0x00000f76                __vector_36
+                0x00000f88       0x66 USART1.o
+                0x00000f88                __vector_36
  .text.usart2SendByte
-                0x00000fdc       0x48 USART2.o
-                0x00000fdc                usart2SendByte
+                0x00000fee       0x48 USART2.o
+                0x00000fee                usart2SendByte
  .text.usart2Init
-                0x00001024       0x74 USART2.o
-                0x00001024                usart2Init
- .text.usart2SendString
-                0x00001098       0x32 USART2.o
-                0x00001098                usart2SendString
+                0x00001036       0x74 USART2.o
+                0x00001036                usart2Init
+ .text.usart2SendBytes
+                0x000010aa       0x38 USART2.o
+                0x000010aa                usart2SendBytes
  .text.__vector_52
-                0x000010ca       0x6a USART2.o
-                0x000010ca                __vector_52
+                0x000010e2       0x6a USART2.o
+                0x000010e2                __vector_52
  .text.__vector_51
-                0x00001134       0x66 USART2.o
-                0x00001134                __vector_51
+                0x0000114c       0x66 USART2.o
+                0x0000114c                __vector_51
  .text.parseRxUbxNavPvt
-                0x0000119a      0x2c2 ZEDF9P.o
-                0x0000119a                parseRxUbxNavPvt
+                0x000011b2      0x2c2 ZEDF9P.o
+                0x000011b2                parseRxUbxNavPvt
  .text.getNavPvtLat
-                0x0000145c       0x1a ZEDF9P.o
-                0x0000145c                getNavPvtLat
+                0x00001474       0x1a ZEDF9P.o
+                0x00001474                getNavPvtLat
  .text.getNavPvtLon
-                0x00001476       0x1a ZEDF9P.o
-                0x00001476                getNavPvtLon
+                0x0000148e       0x1a ZEDF9P.o
+                0x0000148e                getNavPvtLon
  .text.calculerChecksum
-                0x00001490       0x2a ZEDF9P.o
-                0x00001490                calculerChecksum
+                0x000014a8       0x2a ZEDF9P.o
+                0x000014a8                calculerChecksum
  .text.envoieConfigPortUart1
-                0x000014ba       0x84 ZEDF9P.o
-                0x000014ba                envoieConfigPortUart1
+                0x000014d2       0x84 ZEDF9P.o
+                0x000014d2                envoieConfigPortUart1
  .text.envoieConfigRate
-                0x0000153e       0x6e ZEDF9P.o
-                0x0000153e                envoieConfigRate
+                0x00001556       0x6e ZEDF9P.o
+                0x00001556                envoieConfigRate
  .text.envoieConfigMsg
-                0x000015ac       0x68 ZEDF9P.o
-                0x000015ac                envoieConfigMsg
+                0x000015c4       0x68 ZEDF9P.o
+                0x000015c4                envoieConfigMsg
  .text.getNavPvtTime
-                0x00001614       0x36 ZEDF9P.o
-                0x00001614                getNavPvtTime
+                0x0000162c       0x36 ZEDF9P.o
+                0x0000162c                getNavPvtTime
  .text.avr-libc.fplib
-                0x0000164a        0xa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(addsf3.o)
-                0x0000164a                __subsf3
-                0x0000164c                __addsf3
+                0x00001662        0xa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(addsf3.o)
+                0x00001662                __subsf3
+                0x00001664                __addsf3
  .text.avr-libc.fplib
-                0x00001654       0xc0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(addsf3x.o)
-                0x0000166e                __addsf3x
+                0x0000166c       0xc0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(addsf3x.o)
+                0x00001686                __addsf3x
  .text.avr-libc.fplib
-                0x00001714        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(divsf3.o)
-                0x00001714                __divsf3
+                0x0000172c        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(divsf3.o)
+                0x0000172c                __divsf3
  .text.avr-libc.fplib
-                0x00001718       0xcc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(divsf3x.o)
-                0x0000172e                __divsf3x
-                0x00001732                __divsf3_pse
+                0x00001730       0xcc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(divsf3x.o)
+                0x00001746                __divsf3x
+                0x0000174a                __divsf3_pse
  .text.avr-libc.fplib
-                0x000017e4       0x58 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fixunssfsi.o)
-                0x000017e4                __fixunssfsi
+                0x000017fc       0x58 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fixunssfsi.o)
+                0x000017fc                __fixunssfsi
  .text.avr-libc.fplib
-                0x0000183c       0x7a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(floatsisf.o)
-                0x0000183c                __floatunsisf
-                0x00001840                __floatsisf
+                0x00001854       0x7a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(floatsisf.o)
+                0x00001854                __floatunsisf
+                0x00001858                __floatsisf
  .text.avr-libc.fplib
-                0x000018b6        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_inf.o)
-                0x000018b6                __fp_inf
+                0x000018ce        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_inf.o)
+                0x000018ce                __fp_inf
  .text.avr-libc.fplib
-                0x000018c2        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_nan.o)
-                0x000018c2                __fp_nan
+                0x000018da        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_nan.o)
+                0x000018da                __fp_nan
  .text.avr-libc.fplib
-                0x000018c8        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_pscA.o)
-                0x000018c8                __fp_pscA
+                0x000018e0        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_pscA.o)
+                0x000018e0                __fp_pscA
  .text.avr-libc.fplib
-                0x000018d6        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_pscB.o)
-                0x000018d6                __fp_pscB
+                0x000018ee        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_pscB.o)
+                0x000018ee                __fp_pscB
  .text.avr-libc.fplib
-                0x000018e4       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_round.o)
-                0x000018e4                __fp_round
+                0x000018fc       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_round.o)
+                0x000018fc                __fp_round
  .text.avr-libc.fplib
-                0x00001906       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_split3.o)
-                0x00001906                __fp_split3
-                0x00001916                __fp_splitA
+                0x0000191e       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_split3.o)
+                0x0000191e                __fp_split3
+                0x0000192e                __fp_splitA
  .text.avr-libc.fplib
-                0x0000194a        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_zero.o)
-                0x0000194a                __fp_zero
-                0x0000194c                __fp_szero
+                0x00001962        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(fp_zero.o)
+                0x00001962                __fp_zero
+                0x00001964                __fp_szero
  .text.avr-libc.fplib
-                0x00001958        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(mulsf3.o)
-                0x00001958                __mulsf3
+                0x00001970        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(mulsf3.o)
+                0x00001970                __mulsf3
  .text.avr-libc.fplib
-                0x0000195c       0xc2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(mulsf3x.o)
-                0x00001970                __mulsf3x
-                0x00001974                __mulsf3_pse
+                0x00001974       0xc2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libm.a(mulsf3x.o)
+                0x00001988                __mulsf3x
+                0x0000198c                __mulsf3_pse
  .text.avr-libc
-                0x00001a1e      0x712 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libprintf_flt.a(vfprintf_flt.o)
-                0x00001a1e                vfprintf
+                0x00001a36      0x712 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libprintf_flt.a(vfprintf_flt.o)
+                0x00001a36                vfprintf
  .text.libgcc.div
-                0x00002130       0x26 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_divmodhi4.o)
-                0x00002130                _div
-                0x00002130                __divmodhi4
- .text.libgcc   0x00002156       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_tablejump2.o)
-                0x00002156                __tablejump2__
+                0x00002148       0x26 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_divmodhi4.o)
+                0x00002148                _div
+                0x00002148                __divmodhi4
+ .text.libgcc   0x0000216e       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_tablejump2.o)
+                0x0000216e                __tablejump2__
  .text.libgcc.div
-                0x00002166       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_udivmodhi4.o)
-                0x00002166                __udivmodhi4
+                0x0000217e       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_udivmodhi4.o)
+                0x0000217e                __udivmodhi4
  .text.avr-libc
-                0x0000218e      0x1b0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(ftoa_engine.o)
-                0x0000218e                __ftoa_engine
+                0x000021a6      0x1b0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(ftoa_engine.o)
+                0x000021a6                __ftoa_engine
  .text.avr-libc
-                0x0000233e       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(strnlen_P.o)
-                0x0000233e                strnlen_P
+                0x00002356       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(strnlen_P.o)
+                0x00002356                strnlen_P
  .text.avr-libc
-                0x00002354       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(strnlen.o)
-                0x00002354                strnlen
+                0x0000236c       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(strnlen.o)
+                0x0000236c                strnlen
  .text.avr-libc
-                0x0000236a       0x78 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(fputc.o)
-                0x0000236a                fputc
+                0x00002382       0x78 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(fputc.o)
+                0x00002382                fputc
  .text.avr-libc
-                0x000023e2       0x5c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(sprintf.o)
-                0x000023e2                sprintf
+                0x000023fa       0x5c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(sprintf.o)
+                0x000023fa                sprintf
  .text.avr-libc
-                0x0000243e       0xbc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(ultoa_invert.o)
-                0x0000243e                __ultoa_invert
-                0x000024fa                . = ALIGN (0x2)
+                0x00002456       0xbc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avr6\libc.a(ultoa_invert.o)
+                0x00002456                __ultoa_invert
+                0x00002512                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x000024fa        0x0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_exit.o)
-                0x000024fa                _exit
-                0x000024fa                exit
+ .fini9         0x00002512        0x0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_exit.o)
+                0x00002512                _exit
+                0x00002512                exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -821,221 +825,239 @@ END GROUP
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x000024fa        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_exit.o)
+ .fini0         0x00002512        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avr6\libgcc.a(_exit.o)
  *(.fini0)
-                0x000024fe                _etext = .
+                0x00002516                _etext = .
 
-.data           0x00800200       0x4e load address 0x000024fe
+.data           0x00800200       0x5a load address 0x00002516
                 0x00800200                PROVIDE (__data_start, .)
  *(.data)
  *(.data*)
+ .data.tab      0x00800200        0x2 main.o
+                0x00800200                tab
+ .data.password
+                0x00800202        0x4 main.o
+                0x00800202                password
  .data.refreshDist
-                0x00800200        0x1 main.o
-                0x00800200                refreshDist
- .data.setRate  0x00800201        0xe main.o
-                0x00800201                setRate
+                0x00800206        0x1 main.o
+                0x00800206                refreshDist
+ .data.setRate  0x00800207        0xe main.o
+                0x00800207                setRate
  .data.refreshAffichage
-                0x0080020f        0x1 main.o
-                0x0080020f                refreshAffichage
- .data.id       0x00800210        0x1 ZEDF9P.o
-                0x00800210                id
+                0x00800215        0x1 main.o
+                0x00800215                refreshAffichage
+ .data.id       0x00800216        0x1 ZEDF9P.o
+                0x00800216                id
  *(.gnu.linkonce.d*)
  *(.rodata)
  *(.rodata*)
  .rodata.str1.1
-                0x00800211       0x33 main.o
-                                 0x36 (size before relaxing)
+                0x00800217       0x39 main.o
+                                 0x3c (size before relaxing)
  .rodata.str1.1
-                0x00800244        0x9 ZEDF9P.o
+                0x00800250        0x9 ZEDF9P.o
  *(.gnu.linkonce.r*)
-                0x0080024e                . = ALIGN (0x2)
- *fill*         0x0080024d        0x1 
-                0x0080024e                _edata = .
-                0x0080024e                PROVIDE (__data_end, .)
+                0x0080025a                . = ALIGN (0x2)
+ *fill*         0x00800259        0x1 
+                0x0080025a                _edata = .
+                0x0080025a                PROVIDE (__data_end, .)
 
-.bss            0x0080024e      0x3b6
-                0x0080024e                PROVIDE (__bss_start, .)
+.bss            0x0080025a      0x3ff
+                0x0080025a                PROVIDE (__bss_start, .)
  *(.bss)
  *(.bss*)
- .bss.temp      0x0080024e        0x2 LiDAR.o
-                0x0080024e                temp
- .bss.amp       0x00800250        0x2 LiDAR.o
-                0x00800250                amp
- .bss.dist      0x00800252        0x2 LiDAR.o
-                0x00800252                dist
- .bss.retour    0x00800254        0x1 LiDAR.o
-                0x00800254                retour
- .bss.checksum  0x00800255        0x1 LiDAR.o
-                0x00800255                checksum
+ .bss.temp      0x0080025a        0x2 LiDAR.o
+                0x0080025a                temp
+ .bss.amp       0x0080025c        0x2 LiDAR.o
+                0x0080025c                amp
+ .bss.dist      0x0080025e        0x2 LiDAR.o
+                0x0080025e                dist
+ .bss.retour    0x00800260        0x1 LiDAR.o
+                0x00800260                retour
+ .bss.checksum  0x00800261        0x1 LiDAR.o
+                0x00800261                checksum
  .bss.indexPayload2
-                0x00800256        0x1 LiDAR.o
-                0x00800256                indexPayload2
+                0x00800262        0x1 LiDAR.o
+                0x00800262                indexPayload2
  .bss.indexTrame2
-                0x00800257        0x1 LiDAR.o
-                0x00800257                indexTrame2
- .bss.state2    0x00800258        0x1 LiDAR.o
-                0x00800258                state2
+                0x00800263        0x1 LiDAR.o
+                0x00800263                indexTrame2
+ .bss.state2    0x00800264        0x1 LiDAR.o
+                0x00800264                state2
+ .bss.mode      0x00800265        0x1 main.o
+                0x00800265                mode
+ .bss.passwordValid
+                0x00800266        0x1 main.o
+                0x00800266                passwordValid
+ .bss.cntPassword
+                0x00800267        0x1 main.o
+                0x00800267                cntPassword
+ .bss.lastKey   0x00800268        0x1 main.o
+                0x00800268                lastKey
+ .bss.key       0x00800269        0x1 main.o
+                0x00800269                key
  .bss.vitesseMoteurD
-                0x00800259        0x2 main.o
-                0x00800259                vitesseMoteurD
+                0x0080026a        0x2 main.o
+                0x0080026a                vitesseMoteurD
  .bss.vitesseMoteurG
-                0x0080025b        0x2 main.o
-                0x0080025b                vitesseMoteurG
- .bss.triAdc    0x0080025d        0x1 main.o
-                0x0080025d                triAdc
+                0x0080026c        0x2 main.o
+                0x0080026c                vitesseMoteurG
+ .bss.triAdc    0x0080026e        0x1 main.o
+                0x0080026e                triAdc
  .bss.receptionAdc
-                0x0080025e        0x2 main.o
-                0x0080025e                receptionAdc
- .bss.joysticY  0x00800260        0x2 main.o
-                0x00800260                joysticY
- .bss.joysticX  0x00800262        0x2 main.o
-                0x00800262                joysticX
+                0x0080026f        0x2 main.o
+                0x0080026f                receptionAdc
+ .bss.joysticY  0x00800271        0x2 main.o
+                0x00800271                joysticY
+ .bss.joysticX  0x00800273        0x2 main.o
+                0x00800273                joysticX
  .bss.encodeurDCnt
-                0x00800264        0x2 main.o
-                0x00800264                encodeurDCnt
+                0x00800275        0x2 main.o
+                0x00800275                encodeurDCnt
  .bss.encodeurGCnt
-                0x00800266        0x2 main.o
-                0x00800266                encodeurGCnt
+                0x00800277        0x2 main.o
+                0x00800277                encodeurGCnt
  .bss.encodeurEtatPrecedent2
-                0x00800268        0x1 main.o
-                0x00800268                encodeurEtatPrecedent2
+                0x00800279        0x1 main.o
+                0x00800279                encodeurEtatPrecedent2
  .bss.encodeurEtatPrecedent
-                0x00800269        0x1 main.o
-                0x00800269                encodeurEtatPrecedent
+                0x0080027a        0x1 main.o
+                0x0080027a                encodeurEtatPrecedent
  .bss.dataLiDAR
-                0x0080026a        0x1 main.o
-                0x0080026a                dataLiDAR
- .bss.lon       0x0080026b        0x4 main.o
-                0x0080026b                lon
- .bss.lat       0x0080026f        0x4 main.o
-                0x0080026f                lat
+                0x0080027b        0x1 main.o
+                0x0080027b                dataLiDAR
+ .bss.lon       0x0080027c        0x4 main.o
+                0x0080027c                lon
+ .bss.lat       0x00800280        0x4 main.o
+                0x00800280                lat
  .bss.cntDixiemeDeSec
-                0x00800273        0x2 main.o
-                0x00800273                cntDixiemeDeSec
+                0x00800284        0x2 main.o
+                0x00800284                cntDixiemeDeSec
  .bss.rxContentLiDAR
-                0x00800275        0x1 USART0.o
-                0x00800275                rxContentLiDAR
+                0x00800286        0x1 USART0.o
+                0x00800286                rxContentLiDAR
  .bss.txCntLiDAR
-                0x00800276        0x1 USART0.o
-                0x00800276                txCntLiDAR
+                0x00800287        0x1 USART0.o
+                0x00800287                txCntLiDAR
  .bss.rxCntLiDAR
-                0x00800277        0x1 USART0.o
-                0x00800277                rxCntLiDAR
+                0x00800288        0x1 USART0.o
+                0x00800288                rxCntLiDAR
  .bss.rxBufferOutLiDAR
-                0x00800278        0x1 USART0.o
-                0x00800278                rxBufferOutLiDAR
+                0x00800289        0x1 USART0.o
+                0x00800289                rxBufferOutLiDAR
  .bss.txBufferOutLiDAR
-                0x00800279        0x1 USART0.o
-                0x00800279                txBufferOutLiDAR
+                0x0080028a        0x1 USART0.o
+                0x0080028a                txBufferOutLiDAR
  .bss.rxBufferInLiDAR
-                0x0080027a        0x1 USART0.o
-                0x0080027a                rxBufferInLiDAR
+                0x0080028b        0x1 USART0.o
+                0x0080028b                rxBufferInLiDAR
  .bss.rxContentGPS
-                0x0080027b        0x1 USART1.o
-                0x0080027b                rxContentGPS
- .bss.txCntGPS  0x0080027c        0x1 USART1.o
-                0x0080027c                txCntGPS
- .bss.rxCntGPS  0x0080027d        0x1 USART1.o
-                0x0080027d                rxCntGPS
+                0x0080028c        0x1 USART1.o
+                0x0080028c                rxContentGPS
+ .bss.txCntGPS  0x0080028d        0x1 USART1.o
+                0x0080028d                txCntGPS
+ .bss.rxCntGPS  0x0080028e        0x1 USART1.o
+                0x0080028e                rxCntGPS
  .bss.rxBufferOutGPS
-                0x0080027e        0x1 USART1.o
-                0x0080027e                rxBufferOutGPS
+                0x0080028f        0x1 USART1.o
+                0x0080028f                rxBufferOutGPS
  .bss.txBufferOutGPS
-                0x0080027f        0x1 USART1.o
-                0x0080027f                txBufferOutGPS
+                0x00800290        0x1 USART1.o
+                0x00800290                txBufferOutGPS
  .bss.rxBufferInGPS
-                0x00800280        0x1 USART1.o
-                0x00800280                rxBufferInGPS
+                0x00800291        0x1 USART1.o
+                0x00800291                rxBufferInGPS
  .bss.txBufferInGPS
-                0x00800281        0x1 USART1.o
-                0x00800281                txBufferInGPS
+                0x00800292        0x1 USART1.o
+                0x00800292                txBufferInGPS
  .bss.txCntBluetooth
-                0x00800282        0x1 USART2.o
-                0x00800282                txCntBluetooth
+                0x00800293        0x1 USART2.o
+                0x00800293                txCntBluetooth
  .bss.rxCntBluetooth
-                0x00800283        0x1 USART2.o
-                0x00800283                rxCntBluetooth
+                0x00800294        0x1 USART2.o
+                0x00800294                rxCntBluetooth
  .bss.txBufferOutBluetooth
-                0x00800284        0x1 USART2.o
-                0x00800284                txBufferOutBluetooth
+                0x00800295        0x1 USART2.o
+                0x00800295                txBufferOutBluetooth
  .bss.rxBufferInBluetooth
-                0x00800285        0x1 USART2.o
-                0x00800285                rxBufferInBluetooth
+                0x00800296        0x1 USART2.o
+                0x00800296                rxBufferInBluetooth
  .bss.txBufferInBluetooth
-                0x00800286        0x1 USART2.o
-                0x00800286                txBufferInBluetooth
- .bss.length    0x00800287        0x1 ZEDF9P.o
-                0x00800287                length
- .bss.retour2   0x00800288        0x1 ZEDF9P.o
-                0x00800288                retour2
+                0x00800297        0x1 USART2.o
+                0x00800297                txBufferInBluetooth
+ .bss.length    0x00800298        0x1 ZEDF9P.o
+                0x00800298                length
+ .bss.retour2   0x00800299        0x1 ZEDF9P.o
+                0x00800299                retour2
  .bss.checksumB
-                0x00800289        0x1 ZEDF9P.o
-                0x00800289                checksumB
+                0x0080029a        0x1 ZEDF9P.o
+                0x0080029a                checksumB
  .bss.checksumA
-                0x0080028a        0x1 ZEDF9P.o
-                0x0080028a                checksumA
+                0x0080029b        0x1 ZEDF9P.o
+                0x0080029b                checksumA
  .bss.indexPayload
-                0x0080028b        0x1 ZEDF9P.o
-                0x0080028b                indexPayload
+                0x0080029c        0x1 ZEDF9P.o
+                0x0080029c                indexPayload
  .bss.indexTrame
-                0x0080028c        0x1 ZEDF9P.o
-                0x0080028c                indexTrame
+                0x0080029d        0x1 ZEDF9P.o
+                0x0080029d                indexTrame
  .bss.ackConfigOdo
-                0x0080028d        0x1 ZEDF9P.o
-                0x0080028d                ackConfigOdo
+                0x0080029e        0x1 ZEDF9P.o
+                0x0080029e                ackConfigOdo
  .bss.ackConfigMsg
-                0x0080028e        0x1 ZEDF9P.o
-                0x0080028e                ackConfigMsg
+                0x0080029f        0x1 ZEDF9P.o
+                0x0080029f                ackConfigMsg
  .bss.ackConfigRate
-                0x0080028f        0x1 ZEDF9P.o
-                0x0080028f                ackConfigRate
+                0x008002a0        0x1 ZEDF9P.o
+                0x008002a0                ackConfigRate
  .bss.ackConfigUart1
-                0x00800290        0x1 ZEDF9P.o
-                0x00800290                ackConfigUart1
- .bss.state     0x00800291        0x1 ZEDF9P.o
-                0x00800291                state
+                0x008002a1        0x1 ZEDF9P.o
+                0x008002a1                ackConfigUart1
+ .bss.state     0x008002a2        0x1 ZEDF9P.o
+                0x008002a2                state
  *(COMMON)
- COMMON         0x00800292       0x12 LiDAR.o
-                0x00800292                trameLidarValide
-                0x0080029b                trameLidar
- COMMON         0x008002a4       0x94 main.o
-                0x008002a4                cnt
-                0x008002a5                msgEncoD
-                0x008002ad                msg
-                0x008002b5                msgBluetooth
-                0x008002e7                msgGpsLat
-                0x008002f7                msgEncoG
-                0x008002ff                msgGpsLon
-                0x0080030f                msgLiDAR
-                0x00800323                msgTime
-                0x00800337                dataGps
- COMMON         0x00800338       0x81 USART0.o
-                0x00800338                txBufferLiDAR
-                0x00800378                rxBufferLiDAR
-                0x008003b8                _usartRxTmpLiDAR
- COMMON         0x008003b9      0x101 USART1.o
-                0x008003b9                txBufferGPS
-                0x00800439                _usartRxTmpGps
-                0x0080043a                rxBufferGPS
- COMMON         0x008004ba       0x41 USART2.o
-                0x008004ba                _usartRxTmpBluetooth
-                0x008004bb                txBufferBluetooth
-                0x008004db                rxBufferBluetooth
- COMMON         0x008004fb      0x109 ZEDF9P.o
-                0x008004fb                trameGpsNavOdoValide
-                0x00800517                trameGpsNavPosllhValide
-                0x0080053b                trameGpsRx
-                0x0080059f                trameGpsNavPvtValide
-                0x00800603                trame
-                0x00800604                PROVIDE (__bss_end, .)
-                0x000024fe                __data_load_start = LOADADDR (.data)
-                0x0000254c                __data_load_end = (__data_load_start + SIZEOF (.data))
+ COMMON         0x008002a3       0x12 LiDAR.o
+                0x008002a3                trameLidarValide
+                0x008002ac                trameLidar
+ COMMON         0x008002b5       0x98 main.o
+                0x008002b5                cnt
+                0x008002b6                msgEncoD
+                0x008002be                msg
+                0x008002c6                msgBluetooth
+                0x008002f8                msgGpsLat
+                0x00800308                msgEncoG
+                0x00800310                msgGpsLon
+                0x00800320                essaiUser
+                0x00800324                msgLiDAR
+                0x00800338                msgTime
+                0x0080034c                dataGps
+ COMMON         0x0080034d       0x81 USART0.o
+                0x0080034d                txBufferLiDAR
+                0x0080038d                rxBufferLiDAR
+                0x008003cd                _usartRxTmpLiDAR
+ COMMON         0x008003ce      0x101 USART1.o
+                0x008003ce                txBufferGPS
+                0x0080044e                _usartRxTmpGps
+                0x0080044f                rxBufferGPS
+ COMMON         0x008004cf       0x81 USART2.o
+                0x008004cf                _usartRxTmpBluetooth
+                0x008004d0                txBufferBluetooth
+                0x00800510                rxBufferBluetooth
+ COMMON         0x00800550      0x109 ZEDF9P.o
+                0x00800550                trameGpsNavOdoValide
+                0x0080056c                trameGpsNavPosllhValide
+                0x00800590                trameGpsRx
+                0x008005f4                trameGpsNavPvtValide
+                0x00800658                trame
+                0x00800659                PROVIDE (__bss_end, .)
+                0x00002516                __data_load_start = LOADADDR (.data)
+                0x00002570                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x00800604        0x0
+.noinit         0x00800659        0x0
                 [!provide]                PROVIDE (__noinit_start, .)
  *(.noinit*)
                 [!provide]                PROVIDE (__noinit_end, .)
-                0x00800604                _end = .
+                0x00800659                _end = .
                 [!provide]                PROVIDE (__heap_start, .)
 
 .eeprom         0x00810000        0x0
@@ -1110,96 +1132,96 @@ END GROUP
 .debug_sfnames
  *(.debug_sfnames)
 
-.debug_aranges  0x00000000      0x2b0
+.debug_aranges  0x00000000      0x2b8
  *(.debug_aranges)
  .debug_aranges
                 0x00000000       0x50 lcd.o
  .debug_aranges
                 0x00000050       0x38 LiDAR.o
  .debug_aranges
-                0x00000088       0x48 main.o
+                0x00000088       0x50 main.o
  .debug_aranges
-                0x000000d0       0x58 USART0.o
+                0x000000d8       0x58 USART0.o
  .debug_aranges
-                0x00000128       0x58 USART1.o
+                0x00000130       0x58 USART1.o
  .debug_aranges
-                0x00000180       0x58 USART2.o
+                0x00000188       0x58 USART2.o
  .debug_aranges
-                0x000001d8       0xd8 ZEDF9P.o
+                0x000001e0       0xd8 ZEDF9P.o
 
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000     0x2c29
+.debug_info     0x00000000     0x2c40
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0xbbc C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega2560/avr6/crtatmega2560.o
  .debug_info    0x00000bbc      0x5dd lcd.o
  .debug_info    0x00001199      0x21a LiDAR.o
- .debug_info    0x000013b3      0x522 main.o
- .debug_info    0x000018d5      0x336 USART0.o
- .debug_info    0x00001c0b      0x336 USART1.o
- .debug_info    0x00001f41      0x336 USART2.o
- .debug_info    0x00002277      0x9b2 ZEDF9P.o
+ .debug_info    0x000013b3      0x539 main.o
+ .debug_info    0x000018ec      0x336 USART0.o
+ .debug_info    0x00001c22      0x336 USART1.o
+ .debug_info    0x00001f58      0x336 USART2.o
+ .debug_info    0x0000228e      0x9b2 ZEDF9P.o
 
-.debug_abbrev   0x00000000     0x1510
+.debug_abbrev   0x00000000     0x1559
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0xb1a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega2560/avr6/crtatmega2560.o
  .debug_abbrev  0x00000b1a      0x1a4 lcd.o
  .debug_abbrev  0x00000cbe       0xeb LiDAR.o
- .debug_abbrev  0x00000da9      0x12c main.o
- .debug_abbrev  0x00000ed5      0x143 USART0.o
- .debug_abbrev  0x00001018      0x143 USART1.o
- .debug_abbrev  0x0000115b      0x143 USART2.o
- .debug_abbrev  0x0000129e      0x272 ZEDF9P.o
+ .debug_abbrev  0x00000da9      0x175 main.o
+ .debug_abbrev  0x00000f1e      0x143 USART0.o
+ .debug_abbrev  0x00001061      0x143 USART1.o
+ .debug_abbrev  0x000011a4      0x143 USART2.o
+ .debug_abbrev  0x000012e7      0x272 ZEDF9P.o
 
-.debug_line     0x00000000     0x191b
+.debug_line     0x00000000     0x1a0e
  *(.debug_line .debug_line.* .debug_line_end)
  .debug_line    0x00000000      0x1fa C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega2560/avr6/crtatmega2560.o
  .debug_line    0x000001fa      0x309 lcd.o
  .debug_line    0x00000503      0x1bb LiDAR.o
- .debug_line    0x000006be      0x499 main.o
- .debug_line    0x00000b57      0x277 USART0.o
- .debug_line    0x00000dce      0x277 USART1.o
- .debug_line    0x00001045      0x277 USART2.o
- .debug_line    0x000012bc      0x65f ZEDF9P.o
+ .debug_line    0x000006be      0x58c main.o
+ .debug_line    0x00000c4a      0x277 USART0.o
+ .debug_line    0x00000ec1      0x277 USART1.o
+ .debug_line    0x00001138      0x277 USART2.o
+ .debug_line    0x000013af      0x65f ZEDF9P.o
 
-.debug_frame    0x00000000      0x890
+.debug_frame    0x00000000      0x82c
  *(.debug_frame)
  .debug_frame   0x00000000       0xa0 lcd.o
  .debug_frame   0x000000a0       0x54 LiDAR.o
- .debug_frame   0x000000f4      0x1f4 main.o
- .debug_frame   0x000002e8      0x134 USART0.o
- .debug_frame   0x0000041c      0x134 USART1.o
- .debug_frame   0x00000550      0x134 USART2.o
- .debug_frame   0x00000684      0x20c ZEDF9P.o
+ .debug_frame   0x000000f4      0x190 main.o
+ .debug_frame   0x00000284      0x134 USART0.o
+ .debug_frame   0x000003b8      0x134 USART1.o
+ .debug_frame   0x000004ec      0x134 USART2.o
+ .debug_frame   0x00000620      0x20c ZEDF9P.o
 
-.debug_str      0x00000000     0x108c
+.debug_str      0x00000000     0x10de
  *(.debug_str)
  .debug_str     0x00000000      0x3e6 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.7.374/gcc/dev/atmega2560/avr6/crtatmega2560.o
  .debug_str     0x000003e6      0x21d lcd.o
                                 0x256 (size before relaxing)
  .debug_str     0x00000603       0xd8 LiDAR.o
                                 0x275 (size before relaxing)
- .debug_str     0x000006db      0x17f main.o
-                                0x340 (size before relaxing)
- .debug_str     0x0000085a      0x16a USART0.o
+ .debug_str     0x000006db      0x1c9 main.o
+                                0x3c3 (size before relaxing)
+ .debug_str     0x000008a4      0x16a USART0.o
                                 0x329 (size before relaxing)
- .debug_str     0x000009c4      0x133 USART1.o
+ .debug_str     0x00000a0e      0x133 USART1.o
                                 0x31b (size before relaxing)
- .debug_str     0x00000af7      0x175 USART2.o
+ .debug_str     0x00000b41      0x175 USART2.o
                                 0x35d (size before relaxing)
- .debug_str     0x00000c6c      0x420 ZEDF9P.o
+ .debug_str     0x00000cb6      0x428 ZEDF9P.o
                                 0x626 (size before relaxing)
 
-.debug_loc      0x00000000     0x1dc3
+.debug_loc      0x00000000     0x1c28
  *(.debug_loc)
  .debug_loc     0x00000000      0x4ac lcd.o
  .debug_loc     0x000004ac       0x8e LiDAR.o
- .debug_loc     0x0000053a      0x5dd main.o
- .debug_loc     0x00000b17      0x3cd USART0.o
- .debug_loc     0x00000ee4      0x3cd USART1.o
- .debug_loc     0x000012b1      0x3cd USART2.o
- .debug_loc     0x0000167e      0x745 ZEDF9P.o
+ .debug_loc     0x0000053a      0x442 main.o
+ .debug_loc     0x0000097c      0x3cd USART0.o
+ .debug_loc     0x00000d49      0x3cd USART1.o
+ .debug_loc     0x00001116      0x3cd USART2.o
+ .debug_loc     0x000014e3      0x745 ZEDF9P.o
 
 .debug_macinfo
  *(.debug_macinfo)
@@ -1219,15 +1241,15 @@ END GROUP
 .debug_pubtypes
  *(.debug_pubtypes)
 
-.debug_ranges   0x00000000      0x318
+.debug_ranges   0x00000000      0x338
  *(.debug_ranges)
  .debug_ranges  0x00000000       0x40 lcd.o
  .debug_ranges  0x00000040       0x40 LiDAR.o
- .debug_ranges  0x00000080       0x38 main.o
- .debug_ranges  0x000000b8       0x78 USART0.o
- .debug_ranges  0x00000130       0x78 USART1.o
- .debug_ranges  0x000001a8       0x78 USART2.o
- .debug_ranges  0x00000220       0xf8 ZEDF9P.o
+ .debug_ranges  0x00000080       0x58 main.o
+ .debug_ranges  0x000000d8       0x78 USART0.o
+ .debug_ranges  0x00000150       0x78 USART1.o
+ .debug_ranges  0x000001c8       0x78 USART2.o
+ .debug_ranges  0x00000240       0xf8 ZEDF9P.o
 
 .debug_macro
  *(.debug_macro)

@@ -8,8 +8,8 @@
 
 #include "USART2.h"
 
-#define TX_BUFFER_SIZE_BLUETOOTH 32
-#define RX_BUFFER_SIZE_BLUETOOTH 32
+#define TX_BUFFER_SIZE_BLUETOOTH 64
+#define RX_BUFFER_SIZE_BLUETOOTH 64
 
 volatile uint8_t txBufferBluetooth[TX_BUFFER_SIZE_BLUETOOTH];
 volatile uint8_t rxBufferBluetooth[RX_BUFFER_SIZE_BLUETOOTH];

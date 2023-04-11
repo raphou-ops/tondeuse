@@ -1,0 +1,164 @@
+body {
+  /*padding-top: 50px;*/
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+  background-image: url('https://www.myfreetextures.com/wp-content/uploads/2015/01/another-grass-texture-background.jpg');
+}
+
+a {
+  color: #00B7FF;
+}
+
+.navbar {
+  width: 100%;
+  background-color: #555;
+  overflow: auto;
+}
+
+.navbar a {
+  float: left;
+  padding: 12px;
+  color: white;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+.navbar a:hover {
+  background-color: #000;
+}
+
+.active {
+  background-color: #04AA6D;
+}
+
+@media screen and (max-width: 500px) {
+  .navbar a {
+    float: none;
+    display: block;
+  }
+}
+
+#tableUsers {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#tableUsers td,
+#tableUsers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#tableUsers tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+#tableUsers tr:hover {
+  background-color: #ddd;
+}
+
+#tableUsers th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #0470aa;
+  color: white;
+}
+
+#tablePm {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#tablePm td,
+#tablePm th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#tablePm tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+#tablePm tr:hover {
+  background-color: #ddd;
+}
+
+#tablePm th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #aa0404;
+  color: white;
+}
+
+.gradient-text {
+  background-color: #ff0000;
+
+  background-image: linear-gradient(45deg, rgb(47, 187, 237), #ea23cc);
+
+  background-size: 100%;
+  background-repeat: repeat;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-background-clip: text;
+  -moz-text-fill-color: transparent;
+}
+
+.gradient-text1 {
+  background-color: #ff0000;
+
+  background-image: linear-gradient(45deg, rgb(255, 255, 255), #b4b4b4);
+
+  background-size: 100%;
+  background-repeat: repeat;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -moz-background-clip: text;
+  -moz-text-fill-color: transparent;
+  border-width: 100px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Arial", sans-serif;
+  font-weight: normal;
+  font-size: 3.5em;
+  margin-bottom: 0;
+  margin-bottom: -0.25em;
+}
+
+.container {
+  padding: 10px;
+  width: 500px;
+  border-radius: 50%;
+}
+
+.M_1 {
+  display: inline-block;
+  text-align: center;
+}
+
+.M_2 {
+  display: inline-block;
+  text-align: center;
+}
+
+.M_3 {
+  display: inline-block;
+  text-align: center;
+  margin-right: 120px;
+}
+
+.espacement{
+  margin-right: 70px;
+}
+
+.bolded { font-weight: bold; }

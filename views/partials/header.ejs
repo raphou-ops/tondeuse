@@ -1,0 +1,80 @@
+<!-- views/partials/header.ejs -->
+
+<nav class="navbar navbar-expand-sm bg-dark">
+
+    <div class="navbar-header">
+        <a class="navbar-brand" href="/">
+            <span class="glyphicon glyphicon glyphicon-tree-deciduous"></span>
+            RTI22.com
+        </a>
+    </div>
+
+
+    <ul class="navbar-nav">
+        <li class="nav-item">
+        <li><a class="nav-link" href="/?login=<%= utilisateur %>&password=<%= password %>"><i
+                    class="fa fa-fw fa-home"></i>Home</a></li>
+        <li><a class="nav-link" href="/balance"><i class="fa-solid fa-gear"></i>Parametres</a></li>
+        <li><a class="nav-link" href="/balance/#melangeur_section"><i class="fa-solid fa-map-location-dot"></i>Gps</a>
+        </li>
+        <li><a class="nav-link" href="/balance/#aspirateur_section"><i class="fa-solid fa-gamepad"></i>Gestion modes</a>
+        </li>
+        <!--
+        <li><a class="nav-link" href="/powerMeter/#powerMeter_section"><i class="fa-sharp fa-solid fa-bolt"></i>Power
+                meter</a></li>
+        <li><a class="nav-link" href="/powerMeter/#panneauRAM_section"><i class="fa-solid fa-gauge"></i>Panneau
+                R.A.M</a></li> -->
+        </br>
+        <li>
+            <a class="nav-link">
+                <form>
+                    <button type="submit" value="Logout" onclick="logout()" id="pokeLogout"><i
+                            class="fa-solid fa-right-from-bracket"></i></button>
+                </form>
+            </a>
+        </li>
+        </li>
+    </ul>
+</nav>
+</br>
+<div id="warningBalance" class="alert alert-warning" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Warning !</strong> Erreur lors de la communication avec la balance Toledo.
+</div>
+
+<div id="warningPowerMeter" class="alert alert-warning" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Warning !</strong> Erreur lors de la communication avec le power meter Elkor.
+</div>
+
+<div id="warningMelangeur" class="alert alert-warning" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Warning !</strong> Erreur lors de la communication avec le melangeur.
+</div>
+
+<div id="warningAspirateur" class="alert alert-warning" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Warning !</strong> Erreur lors de la communication avec l'aspirateur.
+</div>
+
+<div id="warningALR_GB_NIV_MAX" class="alert alert-warning" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Warning !</strong> Le niveau de l'eau dans le gros bassin du panneau R.A.M vient d'atteindre la limite
+    indiquer !
+</div>
+
+<div id="warningALR_PB_NIV_MAX" class="alert alert-warning" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Warning !</strong> Le niveau de l'eau dans le petit bassin du panneau R.A.M vient d'atteindre la limite
+    indiquer !
+</div>
+
+<div id="alarmeALR_GB_OVF" class="alert alert-danger" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Danger !</strong> Le gros bassin du panneau R.A.M vient de deborder !
+</div>
+
+<div id="alarmeALR_PB_OVF" class="alert alert-danger" style="display:none;">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Danger !</strong> Le petit bassin du panneau R.A.M vient de deborder !
+</div>

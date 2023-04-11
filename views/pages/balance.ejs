@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <%- include('../partials/head') %>
+</head>
+
+<body>
+    <header>
+        <%- include('../partials/header') %>
+            <script>
+                function logout() {
+                    socket.emit('logoutUserBal', true);
+                }
+            </script>
+    </header>
+
+    </br>
+
+    <div class="jumbotron">
+        <div class="jumbotron bg-secondary">
+
+            <h1 class="gradient-text">
+                <%= title %>
+            </h1>
+            </br></br>
+            <table id="tablePm">
+                <thead>
+                    <tr>
+                        <th>Poids</th>
+                        <th>Tare</th>
+                        <th>Unite</th>
+                    </tr>
+                </thead>
+                <tbody id="body">
+                    <tr>
+                        <td class="text-center">
+                            <b id="poids">
+                                <%= poids %>
+                            </b>
+                        </td>
+                        <td class="text-center">
+                            <b id="tare">
+                                <%= tare %>
+                            </b>
+                        </td>
+                        <td class="text-center">
+                            <b id="unité">
+                                <%= unite %>
+                            </b>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <section id="melangeur_section">
+            <div class="jumbotron bg-secondary">
+                <h1 class="gradient-text">
+                    Melangeur
+                </h1>
+
+                </br></br>
+                <% if(droit>= 1) {%>
+                    <div class="text-center">
+                        <button class="button" onclick="openFormManuel()">Mode Manuel</button>
+                        <button class="button" onclick="openFormAuto()">Mode Auto</button>
+                    </div>
+
+                    </br></br>
+
+                    <form onsubmit="return false" id="formManuel" style="display:none;">
+                        <table id="tablePm">
+                            <thead>
+                                <tr>
+                                    <th>Moteur A</th>
+                                    <th>Moteur B</th>
+                                    <th>Moteur C</th>
+                                </tr>
+                            </thead>
+                            <tbody id="body">
+                                <tr>
+                                    <td class="text-center">
+                                        </br>
+                                        <label for="startMoteurA">On</label>
+                                        <input type="radio" id="startMoteurA" name="etatMoteurA" checked>
+                                        <label for="stopMoteurA">Off</label>
+                                        <input type="radio" id="stopMoteurA" name="etatMoteurA">
+                                        </br></br>
+                                        <input type="submit" value="Set Moteur A" id="setMoteurA" />
+                                    </td>
+                                    <td class="text-center">
+                                        </br>
+                                        <label for="startMoteurB">On</label>
+                                        <input type="radio" id="startMoteurB" name="etatMoteurB" checked>
+                                        <label for="stopMoteurB">Off</label>
+                                        <input type="radio" id="stopMoteurB" name="etatMoteurB">
+                                        </br></br>
+                                        <input type="submit" value="Set Moteur B" id="setMoteurB" />
+                                    </td>
+                                    <td class="text-center">
+                                        </br>
+                                        <label for="startMoteurC">On</label>
+                                        <input type="radio" id="startMoteurC" name="etatMoteurC" checked>
+                                        <label for="stopMoteurC">Off</label>
+                                        <input type="radio" id="stopMoteurC" name="etatMoteurC">
+                                        </br></br>
+                                        <input type="submit" value="Set Moteur C" id="setMoteurC" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+
+                    <form onsubmit="return false" id="formAuto" style="display:none;">
+                        <table id="tablePm">
+                            <thead>
+                                <tr>
+                                    <th>Ingredient 1 (grammes)</th>
+                                    <th>Ingredient 2 (grammes)</th>
+                                    <th>Ingredient 3 (grammes)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="body">
+                                <tr>
+                                    <td class="text-center">
+                                        </br>
+                                        <input type="number" id="ingredientA" name="IngredientA" min="50" max="80000"
+                                            value="50">
+                                    </td>
+
+                                    <td class="text-center">
+                                        </br>
+                                        <input type="number" id="ingredientB" name="ingredientB" min="50" max="80000"
+                                            value="50">
+                                    </td>
+
+                                    <td class="text-center">
+                                        </br>
+                                        <input type="number" id="ingredientC" name="ingredientC" min="50" max="80000"
+                                            value="50">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        </br></br></br>
+
+                        <table id="tablePm">
+                            <tbody id="body">
+                                <tr>
+                                    <td class="text-center">
+                                        <input type="submit" value="Add Recette" id="addRecette" />
+                                    </td>
+
+                                    <td class="text-center">
+                                        <input type="submit" value="Start Recette" id="startRecette" />
+                                    </td>
+
+                                    <td class="text-center">
+                                        <input type="submit" value="Stop Recette" id="stopRecette" />
+                                    </td>
+
+                                    <td class="text-center">
+                                        <input type="submit" value="Flush Recette" id="flushRecette" />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                    </br></br>
+                    <%}%>
+                        <label for="etatRecette">Etat recette : </label>
+                        <b id="etatRecette">
+                            <%= statusRecette %>
+                        </b>
+            </div>
+        </section>
+
+        <section id="aspirateur_section">
+            <div class="jumbotron bg-secondary">
+                <h1 class="gradient-text">
+                    Aspirateur
+                </h1>
+                </br></br>
+
+                <div class="text-center">
+                    <% if(droit>= 1) {%>
+                        <button class="button" onclick="goAspirateur()">Go</button>
+                        <button class="button" onclick="stopAspirateur()">Stop</button>
+                        </br></br></br>
+                        <%}%>
+                            <table id="tablePm">
+                                <thead>
+                                    <tr>
+                                        <th>Niveau de remplissage ingredient A (%)</th>
+                                        <th>Niveau de remplissage ingredient B (%)</th>
+                                        <th>Niveau de remplissage ingredient C (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="body">
+                                    <tr>
+                                        <td class="text-center">
+                                            <b id="ingredient1">
+                                                <div id="gaugeA" class="200x160px"></div>
+                                            </b>
+                                        </td>
+                                        <td class="text-center">
+                                            <b id="ingredient2">
+                                                <div id="gaugeB" class="200x160px"></div>
+                                            </b>
+                                        </td>
+                                        <td class="text-center">
+                                            <b id="ingredient3">
+                                                <div id="gaugeC" class="200x160px"></div>
+                                            </b>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            </br></br>
+                </div>
+                <label for="etatApirateur">Etat aspirateur : </label>
+                <b id="etatApirateur">
+                    <%= statusAspirateur %>
+                </b>
+            </div>
+        </section>
+
+        <% if(droit>= 2) {%>
+            <form onsubmit="return false" id="formErreurBal" style="display:none;">
+                <label for="passwordAdminBal">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme de la
+                    balance :</label> </br>
+                <input type="password" name="passwordAdminBal" id="passwordAdminBal" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmeBalance" />
+            </form>
+            </br>
+
+            <form onsubmit="return false" id="formErreurPowerMeter" style="display:none;">
+                <label for="passwordAdminPM">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme du
+                    power meter :</label> </br>
+                <input type="password" name="passwordAdminPM" id="passwordAdminPM" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmePowerMeter" />
+            </form>
+            </br>
+
+            <form onsubmit="return false" id="formErreurMelangeur" style="display:none;">
+                <label for="passwordAdminMel">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme du
+                    melangeur :</label> </br>
+                <input type="password" name="passwordAdminMel" id="passwordAdminMel" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmeMel" />
+            </form>
+            </br>
+
+            <form onsubmit="return false" id="formErreurAspirateur" style="display:none;">
+                <label for="passwordAdminAsp">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme de
+                    l'aspirateur :</label> </br>
+                <input type="password" name="passwordAdminAsp" id="passwordAdminAsp" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmeAsp" />
+            </form>
+
+            </br>
+            <form onsubmit="return false" id="formErreurALR_GB_OVF" style="display:none;">
+                <label for="passwordAdminALR_GB_OVF">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme de
+                    debordement du gros bassin :</label> </br>
+                <input type="password" name="passwordAdminALR_GB_OVF" id="passwordAdminALR_GB_OVF" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmeALR_GB_OVF" />
+            </form>
+            </br>
+            <form onsubmit="return false" id="formErreurALR_PB_OVF" style="display:none;">
+                <label for="passwordAdminALR_PB_OVF">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme de
+                    debordement du petit bassin :</label> </br>
+                <input type="password" name="passwordAdminALR_PB_OVF" id="passwordAdminALR_PB_OVF" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmeALR_PB_OVF" />
+            </form>
+            </br>
+            <form onsubmit="return false" id="formErreurALR_GB_NIV_MAX" style="display:none;">
+                <label for="passwordAdminALR_GB_NIV_MAX">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme
+                    de
+                    depassement de la consigne du niveau maximum du gros bassin :</label> </br>
+                <input type="password" name="passwordAdminALR_GB_NIV_MAX" id="passwordAdminALR_GB_NIV_MAX" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmeALR_GB_NIV_MAX" />
+            </form>
+            </br>
+            <form onsubmit="return false" id="formErreurALR_PB_NIV_MAX" style="display:none;">
+                <label for="passwordAdminALR_PB_NIV_MAX">Veuillez rentrer votre mot de passe pour reconnaitre l'alarme
+                    de
+                    depassement de la consigne du niveau maximum du petit bassin :</label> </br>
+                <input type="password" name="passwordAdminALR_PB_NIV_MAX" id="passwordAdminALR_PB_NIV_MAX" required>
+                </br></br>
+                <input type="submit" value="Confirmer" id="disableAlarmeALR_PB_NIV_MAX" />
+            </form>
+            <%}%>
+    </div>
+
+    <script>
+
+        var g = new JustGage({
+            id: "gaugeA",
+            value: '<%= nivA %>',
+            min: 0,
+            max: 100,
+            shadow: true,
+            pointer: true,
+            pointerOptions: {
+                toplength: 6,
+                bottomlength: 6,
+                bottomwidth: 6,
+                stroke: 'none',
+                stroke_width: 0,
+                stroke_linecap: 'square',
+                color: '#aa0404'
+            },
+            donut: true,
+            title: "Niveau A"
+        });
+        var g2 = new JustGage({
+            id: "gaugeB",
+            value: '<%= nivB %>',
+            min: 0,
+            max: 100,
+            shadow: true,
+            pointer: true,
+            pointerOptions: {
+                toplength: 6,
+                bottomlength: 6,
+                bottomwidth: 6,
+                stroke: 'none',
+                stroke_width: 0,
+                stroke_linecap: 'square',
+                color: '#aa0404'
+            },
+            donut: true,
+            title: "Niveau B"
+        });
+        var g3 = new JustGage({
+            id: "gaugeC",
+            value: '<%= nivC %>',
+            min: 0,
+            max: 100,
+            shadow: true,
+            pointer: true,
+            pointerOptions: {
+                toplength: 6,
+                bottomlength: 6,
+                bottomwidth: 6,
+                stroke: 'none',
+                stroke_width: 0,
+                stroke_linecap: 'square',
+                color: '#aa0404'
+            },
+            donut: true,
+            title: "Niveau C"
+        });
+
+        socket.on('poids', function (poids) {
+            $('#poids').html(poids);
+        });
+        socket.on('tare', function (tare) {
+            $('#tare').html(tare);
+        });
+        socket.on('unite', function (unite) {
+            $('#unité').html(unite);
+        });
+
+
+        socket.on('etatRecette', function (etat) {
+            $('#etatRecette').html(etat);
+        });
+
+        socket.on('etatAspirateur', function (etat) {
+            $('#etatApirateur').html(etat);
+        });
+        socket.on('ingredientA', function (val) {
+            g.refresh(val);
+        });
+        socket.on('ingredientB', function (val) {
+            g2.refresh(val);
+
+        });
+        socket.on('ingredientC', function (val) {
+            g3.refresh(val);
+        });
+
+
+        socket.on('erreurBalance', function () {
+            $("#warningBalance").show();
+            $("#formErreurBal").show();
+        });
+
+        socket.on('erreurPowerMeter', function () {
+            $("#warningPowerMeter").show();
+            $("#formErreurPowerMeter").show();
+        });
+
+        socket.on('erreurMelangeur', function () {
+            $("#warningMelangeur").show();
+            $("#formErreurMelangeur").show();
+        });
+
+        socket.on('erreurAspirateur', function () {
+            $("#warningAspirateur").show();
+            $("#formErreurAspirateur").show();
+        });
+
+
+        socket.on('erreurALR_GB_OVF', function () {
+            $("#alarmeALR_GB_OVF").show();
+            $("#formErreurALR_GB_OVF").show();
+        });
+        socket.on('erreurALR_PB_OVF', function () {
+            $("#alarmeALR_PB_OVF").show();
+            $("#formErreurALR_PB_OVF").show();
+        });
+        socket.on('erreurALR_GB_NIV_MAX', function () {
+            $("#warningALR_GB_NIV_MAX").show();
+            $("#formErreurALR_GB_NIV_MAX").show();
+        });
+        socket.on('erreurALR_PB_NIV_MAX', function () {
+            $("#warningALR_PB_NIV_MAX").show();
+            $("#formErreurALR_PB_NIV_MAX").show();
+        });
+
+        socket.on('hideALR_GB_OVF', function () {
+            $("#alarmeALR_GB_OVF").hide();
+            $("#formErreurALR_GB_OVF").hide();
+        });
+        socket.on('hideALR_PB_OVF', function () {
+            $("#alarmeALR_PB_OVF").hide();
+            $("#formErreurALR_PB_OVF").hide();
+        });
+        socket.on('hideALR_GB_NIV_MAX', function () {
+            $("#warningALR_GB_NIV_MAX").hide();
+            $("#formErreurALR_GB_NIV_MAX").hide();
+        });
+        socket.on('hideALR_PB_NIV_MAX', function () {
+            $("#warningALR_PB_NIV_MAX").hide();
+            $("#formErreurALR_PB_NIV_MAX").hide();
+        });
+
+
+
+        socket.on('hideErreurMeter', function () {
+            $('#warningPowerMeter').hide();
+            $('#formErreurPowerMeter').hide();
+        });
+
+        socket.on('hideErreurBal', function () {
+            $('#warningBalance').hide();
+            $('#formErreurBal').hide();
+        });
+
+        socket.on('hideErreurMel', function () {
+            $('#warningMelangeur').hide();
+            $('#formErreurMelangeur').hide();
+        });
+
+        socket.on('hideErreurAsp', function () {
+            $('#warningAspirateur').hide();
+            $('#formErreurAspirateur').hide();
+        });
+
+        $('#disableAlarmeBalance').click(function () {
+            if ($('#passwordAdminBal').val() == '<%= password %>') {
+                socket.emit('ackBalance', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+
+        $('#disableAlarmePowerMeter').click(function () {
+            if ($('#passwordAdminPM').val() == '<%= password %>') {
+                socket.emit('ackPowerMeter', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+
+        $('#disableAlarmeMel').click(function () {
+            if ($('#passwordAdminMel').val() == '<%= password %>') {
+                socket.emit('ackMelangeur', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+
+        $('#disableAlarmeAsp').click(function () {
+            if ($('#passwordAdminAsp').val() == '<%= password %>') {
+                socket.emit('ackAspirateur', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+
+
+        $('#disableAlarmeALR_GB_OVF').click(function () {
+            if ($('#passwordAdminALR_GB_OVF').val() == '<%= password %>') {
+                socket.emit('ackALR_GB_OVF', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+        $('#disableAlarmeALR_PB_OVF').click(function () {
+            if ($('#passwordAdminALR_PB_OVF').val() == '<%= password %>') {
+                socket.emit('ackALR_PB_OVF', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+        $('#disableAlarmeALR_GB_NIV_MAX').click(function () {
+            if ($('#passwordAdminALR_GB_NIV_MAX').val() == '<%= password %>') {
+                socket.emit('ackALR_GB_NIV_MAX', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+        $('#disableAlarmeALR_PB_NIV_MAX').click(function () {
+            if ($('#passwordAdminALR_PB_NIV_MAX').val() == '<%= password %>') {
+                socket.emit('ackALR_PB_NIV_MAX', '<%= utilisateur %>');
+            }
+            else {
+                alert("Le mot de passe vous avez entrer n'est pas valide.");
+            }
+        });
+
+
+
+        $('#setMoteurA').click(function () {
+            if (document.getElementById('startMoteurA').checked == true) {
+                socket.emit('moteurA', "on");
+            }
+            else {
+                socket.emit('moteurA', "off");
+            }
+        });
+
+        $('#setMoteurB').click(function () {
+            if (document.getElementById('startMoteurB').checked == true) {
+                socket.emit('moteurB', "on");
+            }
+            else {
+                socket.emit('moteurB', "off");
+            }
+        });
+
+        $('#setMoteurC').click(function () {
+            if (document.getElementById('startMoteurC').checked == true) {
+                socket.emit('moteurC', "on");
+            }
+            else {
+                socket.emit('moteurC', "off");
+            }
+        });
+
+        $('#addRecette').click(function () {
+            var ingredientA = $('#ingredientA').val();
+            var ingredientB = $('#ingredientB').val();
+            var ingredientC = $('#ingredientC').val();
+            if ((ingredientA <= 80000 && ingredientA >= 50) && (ingredientB <= 80000 && ingredientB >= 50) && (ingredientC <= 80000 && ingredientC >= 50)) {
+                socket.emit('addRecette', ingredientA / 1000 + "-" + ingredientB / 1000 + "-" + ingredientC / 1000);
+            }
+        });
+
+        $('#startRecette').click(function () {
+            socket.emit('startRecette', "go");
+        });
+        $('#stopRecette').click(function () {
+            socket.emit('stopRecette', "stop");
+        });
+
+        $('#flushRecette').click(function () {
+            socket.emit('flushRecette', "flush");
+        });
+
+        function openFormManuel() {
+            document.getElementById('formManuel').style.display = "block";
+            document.getElementById('formAuto').style.display = "none";
+            socket.emit('modeMelangeur', "manuel");
+        }
+
+        function openFormAuto() {
+            document.getElementById('formAuto').style.display = "block";
+            document.getElementById('formManuel').style.display = "none";
+            socket.emit('modeMelangeur', "auto");
+        }
+        function goAspirateur() {
+            socket.emit('goAspirateur', "GO");
+        }
+        function stopAspirateur() {
+            socket.emit('stopAspirateur', "STOP");
+        }
+    </script>
+
+
+    <footer>
+        <%- include('../partials/footer') %>
+    </footer>
+</body>
+
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <%- include('../partials/head') %>
+</head>
+
+<body>
+    <header>
+        <%- include('../partials/header') %>
+            <script>
+                function logout() {
+                    socket.emit('logoutUserPanneau', true);
+                }
+            </script>
+    </header>
+
+    </br>
+
+    <div class="jumbotron">
+       
+    </div>
+
+    <footer>
+        <%- include('../partials/footer') %>
+    </footer>
+</body>
+
+</html>

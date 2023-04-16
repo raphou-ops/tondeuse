@@ -31,11 +31,11 @@
 
         <% if(droit>= 1) {%>
             <form onsubmit="return false" class="jumbotron bg-secondary">
-                <label for="changerLogin"><b>Changez votre message d'accueil :</b></label>
+                <label for="changerLogin" class="gradient-text"><b>Changez votre message d'accueil :</b></label>
                 </br></br>
                 <input type="text" placeholder="Enter Message" name="changerMessage" id="changerMessage" required>
                 </br></br>
-                <input type="submit" value="Changer" id="pokeChangerMessage" />
+                <input type="submit" value="Changer" id="pokeChangerMessage" class="gradient-text" />
 
             </form>
 
@@ -48,11 +48,11 @@
                             Mot de passe: <%= password %>
                         </p>
                         </br>
-                        <label for="changerPassword"><b>Changez votre mot de passe :</b></label>
+                        <label for="changerPassword" class="gradient-text"><b>Changez votre mot de passe :</b></label>
                         </br></br>
                         <input type="text" placeholder="Enter Password" name="changerPassword" id="changerPassword"
                             required> </br></br>
-                        <input type="submit" value="Changer" id="pokeChangerPassword" />
+                        <input type="submit" value="Changer" id="pokeChangerPassword" class="gradient-text" />
                     </form>
 
                     </br></br>
@@ -60,33 +60,38 @@
                     <%}%>
                         <% if(droit==3) {%>
                             <form onsubmit="return false" class="jumbotron bg-secondary">
-                                <label for="changerPassword"><b>Changez le messsage d'un utilisateur :</b></label>
+                                <label for="changerPassword" class="gradient-text"><b>Changez le messsage d'un
+                                        utilisateur :</b></label>
                                 </br></br>
                                 <input type="text" placeholder="Enter Username" name="userMessage" id="userMessage"
                                     required>
                                 <input type="text" placeholder="Enter Message" name="changerUserMessage"
                                     id="changerUserMessage" required>
                                 </br></br>
-                                <input type="submit" value="Changer" id="pokeChangerUserMessage" />
+                                <input type="submit" value="Changer" id="pokeChangerUserMessage"
+                                    class="gradient-text" />
                             </form>
 
                             </br></br>
 
                             <form onsubmit="return false" class="jumbotron bg-secondary">
-                                <label for="changerPassword"><b>Changez le mot de passe d'un utilisateur :</b></label>
+                                <label for="changerPassword" class="gradient-text"><b>Changez le mot de passe d'un
+                                        utilisateur :</b></label>
                                 </br></br>
                                 <input type="text" placeholder="Enter Username" name="userPassword" id="userPassword"
                                     required>
                                 <input type="text" placeholder="Enter Password" name="changerUserPassword"
                                     id="changerUserPassword" required>
                                 </br></br>
-                                <input type="submit" value="Changer" id="pokeChangerUserPassword" />
+                                <input type="submit" value="Changer" id="pokeChangerUserPassword"
+                                    class="gradient-text" />
                             </form>
 
                             </br></br>
 
                             <form id="formAjout" onsubmit="return false" class="jumbotron bg-secondary">
-                                <label for="label2"><b>Ajoutez un utilisateur au site web :</b></label>
+                                <label for="label2" class="gradient-text"><b>Ajoutez un utilisateur au site web
+                                        :</b></label>
                                 </br> </br>
                                 <label for="ajoutLogin" id="label2">Nom d'utilisateur :</label>
                                 <input type="text" placeholder="Enter Username" name="ajoutLogin" id="ajoutLogin"
@@ -105,19 +110,19 @@
                                     required>
 
                                 </br></br>
-                                <input type="submit" value="Ajouter" id="pokeAjouterUser" />
+                                <input type="submit" value="Ajouter" id="pokeAjouterUser" class="gradient-text" />
                             </form>
 
                             </br></br>
 
                             <form onsubmit="return false" class="jumbotron bg-secondary">
-                                <label for="deleteUser"><b>Supprimez un utilisateur existant :
+                                <label for="deleteUser" class="gradient-text"><b>Supprimez un utilisateur existant :
                                     </b></label>
                                 </br></br>
                                 <input type="text" placeholder="Enter Username" name="deleteUser" id="deleteUser"
                                     required>
                                 </br></br>
-                                <input type="submit" value="Suprimmer" id="pokeDeleteUser" />
+                                <input type="submit" value="Suprimmer" id="pokeDeleteUser" class="gradient-text" />
                             </form>
 
                             </br></br>

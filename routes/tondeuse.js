@@ -39,6 +39,13 @@ io.sockets.on('connection', function (socket) {
     demandeLogout = etat;
     console.log(etat);
   });
+  socket.on('Bluetooth', function (joystickGaucheX, joystickGaucheY) {
+    joystickGaucheX.toFixed(0);
+    joystickGaucheY.toFixed(0);
+    var msg = "<" + joystickGaucheX.toFixed(0).toString() + ";" + joystickGaucheY.toFixed(0).toString() + ">";
+    console.log(msg);
+    port.write(msg);
+  });
 });
 
 var etat = 1;

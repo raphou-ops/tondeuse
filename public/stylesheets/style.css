@@ -1,8 +1,13 @@
 body {
   /*padding-top: 50px;*/
   padding: 50px;
+  font-family: Arial, Helvetica, sans-serif;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
   background-image: url('https://www.myfreetextures.com/wp-content/uploads/2015/01/another-grass-texture-background.jpg');
+}
+
+.center {
+  text-align: center;
 }
 
 a {
@@ -157,8 +162,62 @@ h3 {
   margin-right: 120px;
 }
 
-.espacement{
+.espacement {
   margin-right: 70px;
 }
 
-.bolded { font-weight: bold; }
+.bolded {
+  font-weight: bold;
+}
+
+
+form {
+  border: 3px solid #f1f1f1;
+}
+
+input[type=text],
+input[type=password] {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+.buttonLogin {
+  background-color: #04AA6D;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+.imgcontainer {
+  text-align: center;
+  margin: 24px 0 12px 0;
+}
+
+img.avatar {
+  width: 40%;
+  border-radius: 50%;
+}
+
+.formLogin {
+  width: 50%;
+}
+
+span.psw {
+  float: right;
+  padding-top: 16px;
+}
+
+.selected-button {
+  fill: blue;
+}

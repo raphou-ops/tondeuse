@@ -215,20 +215,20 @@
                         <g></g>
                         <g></g>
                     </svg>
-                    <div>
-                        <a href="https://github.com/raphou-ops/tondeuse.git">GitHub
-                            Repository</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://slack.com/">Nous
-                            contacter</a>
-                    </div>
                 </div>
-
-
-
         </section>
+        <div class="text-center">
+            <a href="https://github.com/raphou-ops/tondeuse.git">GitHub
+                Repository</a>&nbsp;&nbsp;|&nbsp;&nbsp;<a href="https://slack.com/">Nous
+                contacter</a>
+        </div>
     </div>
     <script>
         var joystickGaucheX = 0;
         var joystickGaucheY = 0;
+        var boutonX = 0;
+        var boutonO = 0;
+        var boutonTriangle = 0;
         let controllerIndex = null;
 
         window.addEventListener("gamepadconnected", (event) => {
@@ -256,6 +256,9 @@
                         buttonElement.classList.remove(selectedButtonClass);
                         buttonElement.style.filter = `contrast(100%)`;
                     }
+                    boutonX = buttons[0].value;
+                    boutonO = buttons[1].value;
+                    boutonTriangle = buttons[3].value;
                 }
             }
         }
@@ -285,14 +288,14 @@
                 const gamepad = navigator.getGamepads()[controllerIndex];
                 handleButtons(gamepad.buttons);
                 handleSticks(gamepad.axes);
-                console.log(joystickGaucheX);
-                console.log(joystickGaucheY);
+                // console.log(joystickGaucheX);
+                // console.log(joystickGaucheY);
             }
             window.requestAnimationFrame(gameLoop);
         }
 
         function envoiBluetooth() {
-            socket.emit('Bluetooth', joystickGaucheX, joystickGaucheY);
+            socket.emit('Bluetooth', joystickGaucheX, joystickGaucheY, boutonX, boutonO, boutonTriangle);
         }
 
         setInterval(envoiBluetooth, 100);

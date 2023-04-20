@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "USART0.h"
 #include "USART1.h"
@@ -29,7 +30,7 @@
 #define ODO_MESSAGE 0x1E
 
 volatile uint16_t cntDixiemeDeSec = 0;
-volatile uint8_t refreshAffichage = 1;
+volatile uint8_t refresh = 1;
 
 uint8_t etat = 0;
 char msgGpsLat[16];
@@ -45,7 +46,6 @@ uint8_t setRate[14]={0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0xE8, 0x03, 0x01, 0x00,
 
 /*Variables globales Bluetooth*/
 uint8_t dataBluetooth = 0;
-char msgBluetooth[50];
 
 /*Variables globales LiDAR*/
 uint8_t dataLiDAR = 0;
@@ -61,7 +61,7 @@ volatile uint16_t encodeurDCnt = 0;
 char msgEncoD[8];
 char msgEncoG[8];
 
-/*Variables globales encodeurs*/
+/*Variables globales joystick*/
 int joysticX=0;
 int joysticY=0;
 uint16_t receptionAdc=0;
@@ -87,13 +87,20 @@ uint8_t cntPassword = 0;
 char password[4] = {'1','2','3','4'};
 char essaiUser[4];
 char passwordValid = 0;
-char mode = 0;
+uint8_t modeTondeuse = 0;
 
-uint8_t tab[2]={'A','T'};
+uint8_t cntMenu = 0;
+
+uint8_t set = 0;
+uint8_t setTemps = 0;
+uint8_t heureCoupe = 0;
+uint8_t minutesCoupe = 0;
+char tempsCoupe[5];
 
 void adcInit();//initialise l'adc
 void moteurInit();
 char lireClavier();
+void controleManuel();
 
 void adcInit()
 {
@@ -106,7 +113,7 @@ void adcInit()
 }
 void moteurInit()
 {
-	DDRH|=(1<<3)|(1<<4)|(1<<5);//moteur arrière2
+	DDRH|=(1<<4)|(1<<5);//moteur arrière2
 
 	TCCR4A=0b10101011;
 	TCCR4B=0b00011001;
@@ -114,16 +121,24 @@ void moteurInit()
 	OCR4B=70;
 	OCR4C=0;
 
-	DDRL|=(1<<3)|(1<<4)|(1<<5);//moteur arrière 1
+	DDRL|=(1<<4)|(1<<5);//moteur arrière 1
 	TCCR5A=0b10101011;
 	TCCR5B=0b00011001;
 	OCR5A=1024;//top
 	OCR5B=90;
 	OCR5C=0;
+	
+	DDRB|=(1<<6); //moteur pour la lame
+	TCCR1A=0b10101011;
+	TCCR1B=0b00011001;
+	OCR1A=1024;//top
+	OCR1B=90;
+	OCR1C=0;
 }
 char lireClavier()
 {
 	char digit = 0;
+	
 	if(BT1())
 	{
 		digit = '1';
@@ -143,6 +158,56 @@ char lireClavier()
 	return digit;
 }
 
+void controleManuel()
+{
+	if(joysticY<0)
+	{
+		joysticY*=-1;
+
+		if(joysticX>0)
+		{
+			vitesseMoteurG=joysticY-joysticX;
+			vitesseMoteurD=joysticY;
+		}
+		else
+		{
+			vitesseMoteurD=joysticY+joysticX;
+			vitesseMoteurG=joysticY;
+		}
+
+		if(vitesseMoteurD<0)
+		vitesseMoteurD=0;
+		if(vitesseMoteurG<0)
+		vitesseMoteurG=0;
+		OCR4B=0;
+		OCR5B=(VIT_MIN+vitesseMoteurG);
+		OCR4C=(VIT_MIN+vitesseMoteurD);
+		OCR5C=0;
+	}
+	else
+	{
+		if(joysticX>0)
+		{
+			vitesseMoteurG=joysticY-joysticX;
+			vitesseMoteurD=joysticY;
+		}
+		else
+		{
+			vitesseMoteurD=joysticY+joysticX;
+			vitesseMoteurG=joysticY;
+		}
+		if(vitesseMoteurD<0)
+		vitesseMoteurD=0;
+		if(vitesseMoteurG<0)
+		vitesseMoteurG=0;
+		OCR4B=(VIT_MIN+vitesseMoteurD);
+		OCR5B=0;
+		OCR4C=0;
+		OCR5C=(VIT_MIN+vitesseMoteurG);
+	}
+}
+
+
 int main(void)
 {
 	lcdInit();
@@ -153,36 +218,6 @@ int main(void)
 	
 	lcdPuts("Enter Password:");
 	lcdSetPos(0,1);
-	do{
-		key = lireClavier();
-		
-		if((key)&&(!lastKey))
-		{
-			lcdSetPos(cntPassword,1);
-			essaiUser[cntPassword++] = key;
-			lcdPutc(key);
-		}
-		lastKey = key;
-		
-		if(cntPassword == 4)
-		{
-			for(uint8_t index = 0; index<4; index++)
-			{
-				if(essaiUser[index] == password[index])
-				{
-					passwordValid = 1;
-				}
-				else
-				{
-					lcdClearScreen();
-					lcdPuts("Invalid password");
-					lcdSetPos(0,1);
-					cntPassword = 0;
-					passwordValid = 0;
-				}
-			}
-		}
-	}while(!passwordValid);
 	
 	adcInit();
 	moteurInit();
@@ -198,18 +233,278 @@ int main(void)
 	PCICR |= 0b00000010;//active la lecture sur PCINT4 et PCINT5
 	PCMSK1 |= 0b00110000;//active les interruption sur PCINT4 et PCINT5
 	
-	usartGpsInit(9600,16000000);
 	usart0Init(115200,16000000);
+	usartGpsInit(9600,16000000);
 	usart2Init(9600,16000000);
 	
 	envoieConfigPortUart1(9600);
 	envoieConfigRate(1);
 	envoieConfigMsg(PVT,USART1_ON,USB_ON);
 	usartGpsSendBytes(setRate,14);
-
+	
+	do{
+		key = lireClavier();
+		
+		if((key)&&(!lastKey))
+		{
+			lcdSetPos(cntPassword,1);
+			essaiUser[cntPassword++] = key;
+			lcdPutc(key);
+			if(cntPassword == 4)
+			{
+				for(uint8_t index = 0; index<4; index++)
+				{
+					if(essaiUser[index] == password[index])
+					{
+						passwordValid = 1;
+					}
+					else
+					{
+						lcdClearScreen();
+						lcdPuts("Invalid password");
+						lcdSetPos(0,1);
+						cntPassword = 0;
+						passwordValid = 0;
+					}
+				}
+			}
+		}
+		lastKey = key;
+	}while(!passwordValid);
+	passwordValid = 0;
+	lcdClearScreen();
+	lcdSetPos(0,0);
+	lcdPuts("Mode Manuel  <-");
+	
 	while (1)
 	{
+		key = lireClavier();
 		
+		if((key)&&(!lastKey))
+		{
+			lcdClearScreen();
+			lcdSetPos(0,0);
+			switch(key)
+			{
+				case '1':
+				modeTondeuse = cntMenu;
+				set = 1;
+				break;
+				
+				case '2':
+				if(cntMenu>0)
+				cntMenu --;
+				else
+				cntMenu = 4;
+				
+				break;
+				
+				case '3':
+				if(cntMenu<4)
+				cntMenu ++;
+				else
+				cntMenu = 0;
+				break;
+				
+				case '4':
+				cntMenu = modeTondeuse;
+				set = 1;
+				break;
+			}
+			if(cntMenu == 0)
+			{
+				lcdPuts("Mode Manuel ");
+			}
+			else if(cntMenu == 1)
+			{
+				lcdPuts("Mode Prog   ");
+			}
+			else if(cntMenu == 2)
+			{
+				lcdPuts("Mode Auto   ");
+			}
+			else if(cntMenu == 3)
+			{
+				lcdPuts("Set time    ");
+			}
+			else if(cntMenu == 4)
+			{
+				lcdPuts("Set password");
+			}
+			if(set)
+			{
+				set = 0;
+				setTemps = 0;
+				passwordValid = 0;
+				lcdSetPos(13,0);
+				lcdPuts("<-");
+			}
+		}
+		lastKey = key;
+		
+		if(refresh)
+		{
+			refresh = 0;
+			
+			switch(modeTondeuse)
+			{
+				case 0:
+				controleManuel();
+				if(getBoutonX() == 0x31)
+				{
+					OCR1B=1024;
+					DDRB|=(1<<6);
+				}
+				else
+				{
+					OCR1B=90;
+					DDRB &= ~(1<<6);
+				}
+				lcdSetPos(0,1);
+				lcdPuts(msgTime);
+				break;
+				
+				case 1:
+				controleManuel();
+				if(getBoutonO()==0x31)
+				{
+					lcdClearScreen();
+					lcdSetPos(0,0);
+					lcdPuts(msgGpsLon);
+					lcdSetPos(0,1);
+					lcdPuts(msgGpsLat);
+				}
+				lcdSetPos(11,1);
+				lcdPuts(msgTime);
+				break;
+				
+				case 2:
+				lcdSetPos(0,1);
+				lcdPuts(msgTime);
+				break;
+				
+				case 3:
+				lcdSetPos(0,1);
+				sprintf(tempsCoupe,"%d:%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+				do
+				{
+					key = lireClavier();
+					
+					if((key)&&(!lastKey))
+					{
+						switch(key)
+						{
+							case '1':
+							cntMenu = 3;
+							modeTondeuse = 3;
+							setTemps = 1;
+							lcdClearScreen();
+							lcdSetPos(0,0);
+							lcdPuts("Set time  OK");
+							lcdSetPos(0,1);
+							lcdPuts(msgTime);
+							break;
+							
+							case '2':
+							if(heureCoupe<23)
+							heureCoupe++;
+							else
+							heureCoupe = 0;
+							
+							if((minutesCoupe<10) && (heureCoupe<10))
+							{
+								sprintf(tempsCoupe,"0%d:0%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							else if(minutesCoupe<10)
+							{
+								sprintf(tempsCoupe,"%d:0%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							else if (heureCoupe<10)
+							{
+								sprintf(tempsCoupe,"0%d:%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							else
+							{
+								sprintf(tempsCoupe,"%d:%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							lcdSetPos(0,1);
+							lcdPuts(tempsCoupe);
+							break;
+							
+							case '3':
+							if(minutesCoupe<59)
+							minutesCoupe++;
+							else
+							minutesCoupe = 0;
+							
+							if((minutesCoupe<10) && (heureCoupe<10))
+							{
+								sprintf(tempsCoupe,"0%d:0%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							else if(minutesCoupe<10)
+							{
+								sprintf(tempsCoupe,"%d:0%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							else if (heureCoupe<10)
+							{
+								sprintf(tempsCoupe,"0%d:%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							else
+							{
+								sprintf(tempsCoupe,"%d:%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
+							}
+							lcdSetPos(0,1);
+							lcdPuts(tempsCoupe);
+							break;
+							
+							case '4':
+							cntMenu = 3;
+							modeTondeuse = 3;
+							setTemps = 1;
+							lcdClearScreen();
+							memset(tempsCoupe, 0, sizeof(tempsCoupe));
+							lcdSetPos(0,0);
+							lcdPuts("Set time    ");
+							lcdSetPos(0,1);
+							lcdPuts(msgTime);
+							break;
+						}
+					}
+					lastKey = key;
+				} while (setTemps == 0);
+				break;
+				
+				case 4:
+				do{
+					key = lireClavier();
+					
+					if((key)&&(!lastKey))
+					{
+						lcdSetPos(cntPassword,1);
+						essaiUser[cntPassword++] = key;
+						lcdPutc(key);
+					}
+					lastKey = key;
+					if(cntPassword == 4)
+					{
+						for(uint8_t index = 0; index<4; index++)
+						{
+							password[index] = essaiUser[index];
+						}
+						cntMenu = 4;
+						modeTondeuse = 4;
+						passwordValid = 1;
+						cntPassword = 0;
+						lcdClearScreen();
+						lcdSetPos(0,0);
+						lcdPuts("Set password OK");
+						lcdSetPos(0,1);
+						lcdPuts(msgTime);
+					}
+				}while(!passwordValid);
+				break;
+			}
+		}
 		
 		if(usart0RxAvailable())
 		{
@@ -217,100 +512,40 @@ int main(void)
 			if(parseRxLidar(dataLiDAR))
 			{
 				sprintf(msgLiDAR,"%d",getDist());
-				sprintf(msgBluetooth,"S;%f;%f;%d;%d;%d;%d;",lat,lon,45,3200,6700,70);
+				//sprintf(msgBluetooth,"S;%f;%f;%d;%d;%d;%d;",lat,lon,45,3200,6700,70);
 			}
 		}
-		
+		if(usart2RxAvailable())
+		{
+			dataBluetooth = usart2RemRxData();
+			if(parseBluetooth(dataBluetooth))
+			{
+				joysticX = getJoystickGaucheX();
+				joysticY = getJoystickGaucheY();
+			}
+		}
 		if(usartGpsRxAvailable())
 		{
-			dataGps=usartGpsRemRxData();
+			dataGps = usartGpsRemRxData();
 			if(parseRxUbxNavPvt(dataGps))
 			{
-				lon = getNavPvtLon();
-				lat = getNavPvtLat();
-				
-				sprintf(msgGpsLat, "%f", lat);
-				sprintf(msgGpsLon, "%f", lon);
+				sprintf(msgGpsLat, "%f", getNavPvtLat());
+				sprintf(msgGpsLon, "%f", getNavPvtLon());
 				getNavPvtTime(msgTime);
 			}
 		}
-		if(refreshAffichage)
-		{
-			refreshAffichage = 0;
-			lcdClearScreen();
-			lcdSetPos(0,0);
-			lcdPuts(msgGpsLat);
-			lcdSetPos(9,0);
-			lcdPuts(msgTime);
-			lcdSetPos(0,1);
-			lcdPuts(msgGpsLon);
-			lcdSetPos(9,1);
-			lcdPuts(msgLiDAR);
-			usart2SendString(msgBluetooth);
-			if(joysticY<0)
-			{
-				joysticY*=-1;
-
-				if(joysticX>0)
-				{
-					vitesseMoteurG=joysticY-joysticX;
-					vitesseMoteurD=joysticY;
-				}
-				else
-				{
-					vitesseMoteurD=joysticY+joysticX;
-					vitesseMoteurG=joysticY;
-				}
-
-				if(vitesseMoteurD<0)
-				vitesseMoteurD=0;
-				if(vitesseMoteurG<0)
-				vitesseMoteurG=0;
-				OCR4B=0;
-				OCR5B=(VIT_MIN+vitesseMoteurG);
-				OCR4C=(VIT_MIN+vitesseMoteurD);
-				OCR5C=0;
-			}
-			else
-			{
-				if(joysticX>0)
-				{
-					vitesseMoteurG=joysticY-joysticX;
-					vitesseMoteurD=joysticY;
-				}
-				else
-				{
-					vitesseMoteurD=joysticY+joysticX;
-					vitesseMoteurG=joysticY;
-				}
-				if(vitesseMoteurD<0)
-				vitesseMoteurD=0;
-				if(vitesseMoteurG<0)
-				vitesseMoteurG=0;
-				OCR4B=(VIT_MIN+vitesseMoteurD);
-				OCR5B=0;
-				OCR4C=0;
-				OCR5C=(VIT_MIN+vitesseMoteurG);
-			}
-			key = lireClavier();
-			
-			if((key)&&(!lastKey))
-			{
-				mode = key;
-			}
-			lastKey = key;
-		}
-		if(refreshDist)
-		{
-			refreshDist = 0;
-			lcdClearScreen();
-			lcdSetPos(0,0);
-			sprintf(msgEncoD,"%d",encodeurDCnt);
-			lcdPuts(msgEncoD);
-			lcdSetPos(0,1);
-			sprintf(msgEncoG,"%d",encodeurGCnt);
-			lcdPuts(msgEncoG);
-		}
+		
+		// 		if(refreshDist)
+		// 		{
+		// 			refreshDist = 0;
+		// 			lcdClearScreen();
+		// 			lcdSetPos(0,0);
+		// 			sprintf(msgEncoD,"%d",encodeurDCnt);
+		// 			lcdPuts(msgEncoD);
+		// 			lcdSetPos(0,1);
+		// 			sprintf(msgEncoG,"%d",encodeurGCnt);
+		// 			lcdPuts(msgEncoG);
+		// 		}
 	}
 }
 /**
@@ -322,7 +557,7 @@ ISR(TIMER0_COMPA_vect)//Quand l'interruption globale est appeller le programme v
 	if(cntDixiemeDeSec <= 200)
 	{
 		cntDixiemeDeSec -= 200;
-		refreshAffichage = 1;
+		refresh = 1;
 	}
 }
 ISR(PCINT1_vect)//A chaque detection du capteur une interruption se fait sur PCINT4 et PCINT5 qui correspond a la PINB4 et PINB5 du atmega32u4
@@ -340,6 +575,7 @@ ISR(PCINT1_vect)//A chaque detection du capteur une interruption se fait sur PCI
 	}
 	encodeurEtatPrecedent2 = PINJ&(1<<4);
 }
+
 ISR(ADC_vect)
 {
 	receptionAdc=ADC;
@@ -354,7 +590,7 @@ ISR(ADC_vect)
 		break;
 
 		case 0x1:
-		joysticX=receptionAdc-512;
+		/*joysticX=receptionAdc-512;*/
 		// 		lcdSetPos(0,0);
 		// 		lcdPuts("      ");
 		// 		sprintf(msg,"x:%d",joysticX);
@@ -365,7 +601,7 @@ ISR(ADC_vect)
 		break;
 
 		case 0x2:
-		joysticY=receptionAdc-512;
+		/*joysticY=receptionAdc-512;*/
 		// 		sprintf(msg,"y:%d",joysticY);
 		// 		lcdSetPos(0,1);
 		// 		lcdPuts("      ");

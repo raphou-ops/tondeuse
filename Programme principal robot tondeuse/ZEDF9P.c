@@ -480,5 +480,27 @@ uint8_t getAckConfigOdo()
 
 void getNavPvtTime(char* msg)
 {
-	sprintf(msg,"%d:%d:%d",trameGpsNavPvtValide[14],trameGpsNavPvtValide[15],trameGpsNavPvtValide[16]);
+	uint8_t heure = trameGpsNavPvtValide[14];
+	uint8_t minutes = trameGpsNavPvtValide[15];
+	
+	if(getNavPvtFixType())
+	{
+		heure = heure - 4;
+	}
+	if((minutes<10) && (heure<10))
+	{
+		sprintf(msg,"0%d:0%d",heure,minutes/*,trameGpsNavPvtValide[16]*/);
+	}
+	else if(minutes<10)
+	{
+		sprintf(msg,"%d:0%d",heure,minutes/*,trameGpsNavPvtValide[16]*/);
+	}
+	else if (heure<10)
+	{
+		sprintf(msg,"0%d:%d",heure,minutes/*,trameGpsNavPvtValide[16]*/);
+	}
+	else
+	{
+		sprintf(msg,"%d:%d",heure,minutes/*,trameGpsNavPvtValide[16]*/);
+	}
 }

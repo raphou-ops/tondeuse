@@ -24,6 +24,21 @@ uint8_t rxContentBluetooth = 0;
 uint8_t nbOctetBluetooth = 0;
 uint8_t cntStrBluetooth = 0;
 
+char msgBluetooth[50];
+enum etatsBtRx{DEBUT_TRAME,PAYLOAD,VALIDATE};
+enum etatsBtRx etats = DEBUT_TRAME;
+#define TRAME_BLUETOOTH_SIZE 20
+uint8_t trameBluetoothRx[TRAME_BLUETOOTH_SIZE];
+uint8_t trameBluetoothValide[TRAME_BLUETOOTH_SIZE];
+uint8_t indexBluetooth = 0;
+char tabX[5] = "";
+char tabY[5] = "";
+uint8_t boutonX = 0;
+uint8_t boutonO = 0;
+uint8_t boutonTriangle = 0;
+uint8_t status = 0;
+uint8_t z = 0;
+
 /**
 * @brief Cette fonction gere la transmission de donnes un bit a la fois.
 * @param uint8_t u8data Recoit la commande qu'on veut faire executer au LCD.
@@ -157,4 +172,81 @@ ISR(USART2_RX_vect)//cette interruption est semblable a la derniere mais celle c
 		if(rxBufferInBluetooth >= RX_BUFFER_SIZE_BLUETOOTH)//Si le buffer de reception est plein le buffer se met a 0
 		rxBufferInBluetooth = 0;
 	}
+}
+uint8_t parseBluetooth(uint8_t data)
+{
+	uint8_t valide = 0;
+	switch(etats)
+	{
+		case DEBUT_TRAME:
+		if(data == '<')
+		{
+			indexBluetooth = 0;
+			//trameBluetoothRx[indexBluetooth++] = data;
+			etats = PAYLOAD;
+		}
+		break;
+		
+		case PAYLOAD:
+		if(data == '>')
+		{
+			etats = VALIDATE;
+		}
+		else
+		{
+			trameBluetoothRx[indexBluetooth++] = data;
+		}
+		break;
+		
+		case VALIDATE:
+		status = 0;
+		z = 0;
+		memset(tabX, 0, sizeof(tabX));
+		memset(tabY, 0, sizeof(tabY));
+		for(uint8_t i = 0; i<indexBluetooth; i++)
+		{
+			trameBluetoothValide[i] = trameBluetoothRx[i];
+			
+			if(status == 0)
+			tabX[i] = trameBluetoothValide[i];
+			
+			if(status == 1)
+				tabY[z++] = trameBluetoothValide[i];
+			
+			if(trameBluetoothValide[i] == ';')
+				status++;
+			
+			if(status == 2)
+				boutonX = trameBluetoothValide[i];
+				
+			if(status == 3)
+				boutonO = trameBluetoothValide[i];
+				
+			if(status == 4)
+			{
+				boutonTriangle = trameBluetoothValide[i];
+			}
+			
+		}
+		valide = 1;
+		etats = DEBUT_TRAME;
+		break;
+	}
+	return valide;
+}
+int getJoystickGaucheX()
+{
+	return atoi(tabX);
+}
+int getJoystickGaucheY()
+{
+	return atoi(tabY);
+}
+uint8_t getBoutonX()
+{
+	return boutonX;
+}
+uint8_t getBoutonO()
+{
+	return boutonO;
 }

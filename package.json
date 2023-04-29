@@ -6,6 +6,8 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.15.1",
+    "@types/googlemaps": "^3.43.3",
     "bootstrap": "^5.2.3",
     "cookie-parser": "~1.4.4",
     "cookie-session": "^2.0.0",
@@ -17,6 +19,7 @@
     "morgan": "~1.9.1",
     "mqtt": "^4.3.7",
     "mysql": "^2.18.1",
+    "node-localstorage": "^2.2.1",
     "serialport": "^10.5.0",
     "socket.io": "^4.6.1"
   }

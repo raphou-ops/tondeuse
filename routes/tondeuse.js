@@ -16,7 +16,6 @@ var connection = mysql.createConnection({
 });
 
 router.get('/', function (req, res, next) {
-
   if (demandeLogout) {
     req.session.user = {
       id: 0,

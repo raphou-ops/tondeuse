@@ -58,12 +58,13 @@ router.get('/', function (req, res, next) {
       */
       if (rows.length == 0) {
         //res.render('pages/erreurLogin',{utilisateur : "invité",password : "burger"});
-        req.session.user.id = 4;
-        req.session.user.login = "invité";
-        req.session.user.droit = 0;
-        req.session.user.password = "burger";
-        droit = req.session.user.droit;
-        res.render('pages/utilisateur', { texte: "Bonjour invité", utilisateur: req.session.user.login, droit, password: req.session.user.password });
+        // req.session.user.id = 4;
+        // req.session.user.login = "invité";
+        // req.session.user.droit = 0;
+        // req.session.user.password = "burger";
+        // droit = req.session.user.droit;
+        // res.render('pages/utilisateur', { texte: "Bonjour invité", utilisateur: req.session.user.login, droit, password: req.session.user.password });
+        res.render('pages/erreurLogin', { utilisateur: login, password: req.query.password });
       }
       else {
         req.session.user.id = rows[0].ID;

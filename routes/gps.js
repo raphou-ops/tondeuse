@@ -47,6 +47,7 @@ io.sockets.on('connection', function (socket) {
     socket.on('logoutUserPanneau', function (etat) {
         demandeLogout = etat;
         console.log(etat);
+        console.log("Un utilisateur c'est déconnecté !");
     });
 });
 module.exports = router;

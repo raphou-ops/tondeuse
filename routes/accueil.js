@@ -73,6 +73,7 @@ router.get('/', function (req, res, next) {
         req.session.user.password = rows[0].password;
         droit = req.session.user.droit;
         res.render('pages/utilisateur', { texte: rows[0].texteAccueil, utilisateur: req.session.user.login, droit, password: rows[0].password });
+        console.log('Un client est connecté!');
       }
     });
   }

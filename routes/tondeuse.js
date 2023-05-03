@@ -28,8 +28,8 @@ router.get('/', function (req, res, next) {
   }
   else {
     res.render('pages/tondeuse', { title: 'Paramètres', utilisateur: req.session.user.login, password: req.session.user.password, droit: req.session.user.droit });
-    console.log(req.session.user.login);
-    console.log(req.session.user.password);
+    // console.log(req.session.user.login);
+    // console.log(req.session.user.password);
   }
 });
 
@@ -37,11 +37,12 @@ io.sockets.on('connection', function (socket) {
   socket.on('logoutUserBal', function (etat) {
     demandeLogout = etat;
     console.log(etat);
+    console.log("Un utilisateur c'est déconnecté !");
   });
   socket.on('Bluetooth', function (joystickGaucheX, joystickGaucheY, boutonX, boutonO, boutonTriangle) {
     var msg = "<" + joystickGaucheX.toFixed(0).toString() + ";" + joystickGaucheY.toFixed(0).toString() + ";" + boutonX + ";" + boutonO + ";" + boutonTriangle + ">";
-    console.log(msg);
     port.write(msg);
+    io.sockets.emit('refreshCommande', msg);
   });
 });
 

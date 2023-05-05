@@ -194,7 +194,8 @@
      */
     function initMap() {
         map = new google.maps.Map($('map'), {
-            center: { lat: 30.56, lng: -87.67 },
+            center: new google.maps.LatLng(45.644406753553454, -73.84288944545824),
+            //position: google.maps.LatLng(45.64, -73.84),
             zoom: 2,
             mapTypeId: 'hybrid',
             tilt: 0,
@@ -540,9 +541,9 @@
             var lng = waypointMVCArray.getAt(x).lng();
             if (x == 0) {
                 //Add first line twice (i.e. to set first point as home)
-                missionString += buildWaypointFileLatLngLine(x, lat, lng) + "\n";
+                missionString += buildWaypointFileLatLngLine(x, lat.toFixed(6), lng.toFixed(6)) + "\n";
             }
-            missionString += buildWaypointFileLatLngLine(x + 1, lat, lng) + "\n";
+            missionString += buildWaypointFileLatLngLine(x + 1, lat.toFixed(6), lng.toFixed(6)) + "\n";
         }
         return missionString;
     }
@@ -842,7 +843,7 @@
         }
         else {
             //baswell begin testing
-            var latlng = new google.maps.LatLng(30.563413767103118, -87.67843377406932);
+            var latlng = new google.maps.LatLng(45.644406753553454, -73.84288944545824);
             map.setCenter(latlng);
             map.setZoom(21);
             map.setMapTypeId("hybrid");
@@ -899,6 +900,7 @@
             draggable: true,
             map: map
         });
+        startMarker.setMap(map);
         var bearingEndPointLatLong = bearingLineEndpointCoords(map.getCenter().lat(), map.getCenter().lng(), heading);
         var bearingLineCoordinates = [
             { lat: map.getCenter().lat(), lng: map.getCenter().lng() },
@@ -973,6 +975,64 @@
             <h1 class="gradient-text">
                 <%= title %>
             </h1>
+            </br></br></br>
+            <div class="grid-container">
+
+                <!-- Main -->
+                <main class="main-container">
+
+                    <div class="main-cards">
+
+                        <div class="card">
+                            <div class="card-inner">
+                                <p class="text-primary">Batterie</p>
+                                <span class="material-icons-outlined text-blue">battery_charging_full</span>
+                            </div>
+                            <span class="text-primary font-weight-bold">79%</span>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-inner">
+                                <p class="text-primary">Mode Tondeuse</p>
+                                <span class="material-icons-outlined text-orange">precision_manufacturing</span>
+                            </div>
+                            <span class="text-primary font-weight-bold">Manuel</span>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-inner">
+                                <p class="text-primary">Progression Coupe</p>
+                                <span class="material-icons-outlined text-green">grass</span>
+                            </div>
+                            <span class="text-primary font-weight-bold">Processing</span>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-inner">
+                                <p class="text-primary">Localisation/Méteo</p>
+                                <span class="material-icons-outlined text-red">notification_important</span>
+                            </div>
+                            <span class="text-primary font-weight-bold">73.245678/-45.324526/pluie</span>
+                        </div>
+
+                    </div>
+
+                    <div class="charts">
+                        <div class="charts-card">
+                            <p class="chart-title">Changement de modes</p>
+                            <div id="bar-chart"></div>
+                        </div>
+
+                        <div class="charts-card">
+                            <p class="chart-title">Décharge de la batterie pendant le fonctionnement</p>
+                            <div id="area-chart"></div>
+                        </div>
+
+                    </div>
+                </main>
+                <!-- End Main -->
+
+            </div>
         </div>
 
         <section id="gps_section">
@@ -1021,6 +1081,12 @@
                                 </label>
                             </div>
                         </div>
+                        </br>
+                        <div>
+                            Exporter le trajet du robot (.CSV):
+                            <input id="csv" type="file" accept=".csv">
+                        </div>
+                        <pre id="out"><p></p></pre>
                     </div>
                 </div>
                 <div id="map"></div>
@@ -1039,7 +1105,7 @@
         <section id="modes_section">
             <div class="jumbotron bg-secondary">
                 <h2 class="gradient-text">
-                    Gestion modes
+                    Contrôle Manuel
                 </h2>
                 </br></br></br>
                 <p id="statutManette" class="indicationText">La manette est déconnecté.</p>
@@ -1233,6 +1299,107 @@
     </div>
 
     <script>
+        // ---------- CHARTS ----------
+
+        // BAR CHART
+        var barChartOptions = {
+            series: [{
+                data: [10, 8, 6, 4, 2]
+            }],
+            chart: {
+                type: 'bar',
+                height: 350,
+                toolbar: {
+                    show: false
+                },
+            },
+            colors: [
+                "#246dec",
+                "#cc3c43",
+                "#367952",
+                "#f5b74f",
+                "#4f35a1"
+            ],
+            plotOptions: {
+                bar: {
+                    distributed: true,
+                    borderRadius: 4,
+                    horizontal: false,
+                    columnWidth: '40%',
+                }
+            },
+            dataLabels: {
+                enabled: false
+            },
+            legend: {
+                show: false
+            },
+            xaxis: {
+                categories: ["Manuel", "Prog", "Auto", "Set Heure", "Set PIN"],
+            },
+            yaxis: {
+                title: {
+                    text: "Count"
+                }
+            }
+        };
+
+        var barChart = new ApexCharts(document.querySelector("#bar-chart"), barChartOptions);
+        barChart.render();
+
+
+        // AREA CHART
+        var areaChartOptions = {
+            series: [{
+                name: 'Pourcentage de la batterie',
+                data: [31, 40, 28, 51, 42, 109, 100]
+            }, {
+                name: 'Charge de la batterie',
+                data: [11, 32, 45, 32, 34, 52, 41]
+            }],
+            chart: {
+                height: 350,
+                type: 'area',
+                toolbar: {
+                    show: false,
+                },
+            },
+            colors: ["#4f35a1", "#246dec"],
+            dataLabels: {
+                enabled: false,
+            },
+            stroke: {
+                curve: 'smooth'
+            },
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+            markers: {
+                size: 0
+            },
+            yaxis: [
+                {
+                    title: {
+                        text: 'Pourcentage de la batterie',
+                    },
+                },
+                {
+                    opposite: true,
+                    title: {
+                        text: 'Charge de la batterie',
+                    },
+                },
+            ],
+            tooltip: {
+                shared: true,
+                intersect: false,
+            }
+        };
+
+        var areaChart = new ApexCharts(document.querySelector("#area-chart"), areaChartOptions);
+        areaChart.render();
+
+    </script>
+
+    <script>
         //Variables pour la manette
 
         var joystickGaucheX = 0;
@@ -1324,6 +1491,24 @@
         socket.on('refreshCommande', function (msg) {
             document.getElementById("commandeManette").innerHTML = msg;
         });
+
+        const fileInput = document.getElementById('csv')
+        const readFile = () => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                document.getElementById('out').innerHTML = "Le données on étés envoyées.";
+                var longueur = reader.result.split("\n").length;
+                var row = reader.result.split("\n");
+                console.log(row);
+
+                socket.emit('progBluetooth', row, longueur);
+
+            }
+            // start reading the file. When it is done, calls the onload event defined above.
+            reader.readAsBinaryString(fileInput.files[0]);
+        }
+
+        fileInput.addEventListener('change', readFile);
 
         setInterval(envoiBluetooth, 100);
         gameLoop();

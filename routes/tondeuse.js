@@ -27,7 +27,7 @@ router.get('/', function (req, res, next) {
     res.redirect('/');
   }
   else {
-    res.render('pages/tondeuse', { title: 'Paramètres', utilisateur: req.session.user.login, password: req.session.user.password, droit: req.session.user.droit });
+    res.render('pages/tondeuse', { title: 'Dashboard', utilisateur: req.session.user.login, password: req.session.user.password, droit: req.session.user.droit });
     // console.log(req.session.user.login);
     // console.log(req.session.user.password);
   }
@@ -41,8 +41,14 @@ io.sockets.on('connection', function (socket) {
   });
   socket.on('Bluetooth', function (joystickGaucheX, joystickGaucheY, boutonX, boutonO, boutonTriangle) {
     var msg = "<" + joystickGaucheX.toFixed(0).toString() + ";" + joystickGaucheY.toFixed(0).toString() + ";" + boutonX + ";" + boutonO + ";" + boutonTriangle + ">";
-    port.write(msg);
+    //port.write(msg);
     io.sockets.emit('refreshCommande', msg);
+  });
+  socket.on('progBluetooth', function (msg, longueur) {
+    for (let i = 1; i < longueur - 1; i++) {
+      var str = "<" + msg[i] + ">";
+      console.log(str);
+    }
   });
 });
 

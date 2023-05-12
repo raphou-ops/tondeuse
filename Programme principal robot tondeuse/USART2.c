@@ -8,8 +8,9 @@
 
 #include "USART2.h"
 
-#define TX_BUFFER_SIZE_BLUETOOTH 64
-#define RX_BUFFER_SIZE_BLUETOOTH 64
+#define TX_BUFFER_SIZE_BLUETOOTH 256
+#define RX_BUFFER_SIZE_BLUETOOTH 256
+#define TRAME_BLUETOOTH_SIZE 64
 
 volatile uint8_t txBufferBluetooth[TX_BUFFER_SIZE_BLUETOOTH];
 volatile uint8_t rxBufferBluetooth[RX_BUFFER_SIZE_BLUETOOTH];
@@ -24,20 +25,26 @@ uint8_t rxContentBluetooth = 0;
 uint8_t nbOctetBluetooth = 0;
 uint8_t cntStrBluetooth = 0;
 
-char msgBluetooth[50];
+/*Variables globales pour les fonctions parse*/
+
 enum etatsBtRx{DEBUT_TRAME,PAYLOAD,VALIDATE};
 enum etatsBtRx etats = DEBUT_TRAME;
-#define TRAME_BLUETOOTH_SIZE 20
+enum etatsBtRx etatProg = DEBUT_TRAME;
 uint8_t trameBluetoothRx[TRAME_BLUETOOTH_SIZE];
 uint8_t trameBluetoothValide[TRAME_BLUETOOTH_SIZE];
 uint8_t indexBluetooth = 0;
+uint8_t indexBluetoothProg = 0;
 char tabX[5] = "";
 char tabY[5] = "";
+char tabLat4[9];
+char tabLon4[10];
 uint8_t boutonX = 0;
 uint8_t boutonO = 0;
 uint8_t boutonTriangle = 0;
 uint8_t status = 0;
 uint8_t z = 0;
+long latitudeRx = 0;
+long longitudeRx = 0;
 
 /**
 * @brief Cette fonction gere la transmission de donnes un bit a la fois.
@@ -173,7 +180,7 @@ ISR(USART2_RX_vect)//cette interruption est semblable a la derniere mais celle c
 		rxBufferInBluetooth = 0;
 	}
 }
-uint8_t parseBluetooth(uint8_t data)
+uint8_t parseBluetoothManuel(uint8_t data)
 {
 	uint8_t valide = 0;
 	switch(etats)
@@ -182,7 +189,6 @@ uint8_t parseBluetooth(uint8_t data)
 		if(data == '<')
 		{
 			indexBluetooth = 0;
-			//trameBluetoothRx[indexBluetooth++] = data;
 			etats = PAYLOAD;
 		}
 		break;
@@ -211,17 +217,17 @@ uint8_t parseBluetooth(uint8_t data)
 			tabX[i] = trameBluetoothValide[i];
 			
 			if(status == 1)
-				tabY[z++] = trameBluetoothValide[i];
+			tabY[z++] = trameBluetoothValide[i];
 			
 			if(trameBluetoothValide[i] == ';')
-				status++;
+			status++;
 			
 			if(status == 2)
-				boutonX = trameBluetoothValide[i];
-				
+			boutonX = trameBluetoothValide[i];
+			
 			if(status == 3)
-				boutonO = trameBluetoothValide[i];
-				
+			boutonO = trameBluetoothValide[i];
+			
 			if(status == 4)
 			{
 				boutonTriangle = trameBluetoothValide[i];
@@ -234,6 +240,72 @@ uint8_t parseBluetooth(uint8_t data)
 	}
 	return valide;
 }
+
+uint8_t parseBluetoothAuto(uint8_t data)
+{
+	uint8_t valide = 0;
+	switch(etatProg)
+	{
+		case DEBUT_TRAME:
+		if(data == '<')
+		{
+			indexBluetoothProg = 0;
+			etatProg = PAYLOAD;
+		}
+		break;
+		
+		case PAYLOAD:
+		if(data == '>')
+		{
+			etatProg = VALIDATE;
+		}
+		else
+		{
+			trameBluetoothRx[indexBluetoothProg++] = data;
+		}
+		break;
+		
+		case VALIDATE:
+		
+		for(uint8_t i = 0; i<indexBluetoothProg; i++)
+		{
+			trameBluetoothValide[i] = trameBluetoothRx[i];
+		}
+		tabLat4[0]=trameBluetoothValide[2];
+		tabLat4[1]=trameBluetoothValide[3];
+		tabLat4[2]=trameBluetoothValide[4];
+		tabLat4[3]=trameBluetoothValide[5];
+		tabLat4[4]=trameBluetoothValide[6];
+		tabLat4[5]=trameBluetoothValide[7];
+		tabLat4[6]=trameBluetoothValide[8];
+		tabLat4[7]=trameBluetoothValide[9];
+		tabLat4[8]='\0';
+		
+		latitudeRx = atol(tabLat4);
+		
+		tabLon4[0]=trameBluetoothValide[11];
+		tabLon4[1]=trameBluetoothValide[12];
+		tabLon4[2]=trameBluetoothValide[13];
+		tabLon4[3]=trameBluetoothValide[14];
+		tabLon4[4]=trameBluetoothValide[15];
+		tabLon4[5]=trameBluetoothValide[16];
+		tabLon4[6]=trameBluetoothValide[17];
+		tabLon4[7]=trameBluetoothValide[18];
+		tabLon4[8]=trameBluetoothValide[19];
+		tabLon4[9]='\0';
+		
+		longitudeRx = atol(tabLon4);
+		
+		if ((longitudeRx!=0)&&(latitudeRx!=0))
+		{
+			valide = 1;
+		}
+		etatProg = DEBUT_TRAME;
+		break;
+	}
+	return valide;
+}
+
 int getJoystickGaucheX()
 {
 	return atoi(tabX);
@@ -249,4 +321,12 @@ uint8_t getBoutonX()
 uint8_t getBoutonO()
 {
 	return boutonO;
+}
+long getLon()
+{
+	return longitudeRx;
+}
+long getLat()
+{
+	return latitudeRx;
 }

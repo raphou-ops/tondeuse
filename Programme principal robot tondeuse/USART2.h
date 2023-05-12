@@ -10,9 +10,9 @@
 #ifndef USART2_H_
 #define USART2_H_
 #define F_CPU 16000000
-#include <stdio.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -22,9 +22,12 @@ uint8_t usart2RxAvailable();
 uint8_t usart2RemRxData();
 uint8_t usart2SendString(const char * str);
 uint8_t usart2SendBytes(const uint8_t * source, uint8_t size);
-uint8_t parseBluetooth(uint8_t data);
+uint8_t parseBluetoothManuel(uint8_t data);
+uint8_t parseBluetoothAuto(uint8_t data);
 int getJoystickGaucheX();
 int getJoystickGaucheY();
+long getLon();
+long getLat();
 uint8_t getBoutonX();
 uint8_t getBoutonO();
 

@@ -541,9 +541,9 @@
             var lng = waypointMVCArray.getAt(x).lng();
             if (x == 0) {
                 //Add first line twice (i.e. to set first point as home)
-                missionString += buildWaypointFileLatLngLine(x, lat.toFixed(6), lng.toFixed(6)) + "\n";
+                missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6))*1000000, (lng.toFixed(6))*1000000) + "\n";
             }
-            missionString += buildWaypointFileLatLngLine(x + 1, lat.toFixed(6), lng.toFixed(6)) + "\n";
+            missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6))*1000000, (lng.toFixed(6))*1000000) + "\n";
         }
         return missionString;
     }

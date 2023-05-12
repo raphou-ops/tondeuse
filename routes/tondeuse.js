@@ -4,6 +4,8 @@ var mysql = require('mysql');
 var { io } = require('../socketIO');
 var mqtt = require('mqtt');
 
+var ackTondeuse = false;
+
 var demandeLogout = false;
 
 var client = mqtt.connect('mqtt://127.0.0.1:1883');
@@ -41,14 +43,36 @@ io.sockets.on('connection', function (socket) {
   });
   socket.on('Bluetooth', function (joystickGaucheX, joystickGaucheY, boutonX, boutonO, boutonTriangle) {
     var msg = "<" + joystickGaucheX.toFixed(0).toString() + ";" + joystickGaucheY.toFixed(0).toString() + ";" + boutonX + ";" + boutonO + ";" + boutonTriangle + ">";
-    //port.write(msg);
+    //port.write(msg); decommenter cette ligne pour la communication avec la manette. (ne pas paniquer)
     io.sockets.emit('refreshCommande', msg);
   });
   socket.on('progBluetooth', function (msg, longueur) {
-    for (let i = 1; i < longueur - 1; i++) {
+
+    var i = 1, howManyTimes = 10;
+
+    function f() {
+      if (ackTondeuse == true) {
+        i++;
+        ackTondeuse = false;
+      }
       var str = "<" + msg[i] + ">";
+      port.write(str);
       console.log(str);
+
+      if (i < longueur - 1) {
+        setTimeout(f, 100);
+      }
     }
+    f();
+
+    // for (let i = 1; i < longueur - 1; i++) {
+    //   setTimeout(function () {
+    //   var str = "<" + msg[i] + ">";
+    //   port.write(str);
+    //   console.log(str);
+    // }, 1000); //delay is in milliseconds 
+    // }
+
   });
 });
 
@@ -61,7 +85,7 @@ const parser = new ReadlineParser({ delimiter: ';' });
 // Create a port
 const port = new SerialPort({
   path: 'COM17',
-  baudRate: 9600,
+  baudRate: 115200,
   dataBits: 8,
   parity: 'none',
   stopBits: 1,
@@ -94,13 +118,17 @@ parser.on('data', function (data) {
       break;
 
     case 2:
-      index++;
-      if (index < 7) {
-        tabData.push(value);
-      }
-      else {
-        console.log('Data:', tabData);
-        etat = 1;
+      // index++;
+      // if (index < 2) {
+      //   tabData.push(value);
+      // }
+      // else {
+      //   console.log('Data:', tabData);
+      //   etat = 1;
+      // }
+      if (value == "ack") {
+        ackTondeuse = true;
+        console.log(ackTondeuse);
       }
       break;
 

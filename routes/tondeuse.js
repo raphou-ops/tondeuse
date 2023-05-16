@@ -8,6 +8,8 @@ var ackTondeuse = false;
 
 var demandeLogout = false;
 
+var etatEnvoiBluetooth = true;
+
 var client = mqtt.connect('mqtt://127.0.0.1:1883');
 
 var connection = mysql.createConnection({
@@ -46,33 +48,63 @@ io.sockets.on('connection', function (socket) {
     //port.write(msg); decommenter cette ligne pour la communication avec la manette. (ne pas paniquer)
     io.sockets.emit('refreshCommande', msg);
   });
-  socket.on('progBluetooth', function (msg, longueur) {
+  socket.on('cancelBluetoothProg', function () {
+    etatEnvoiBluetooth = false;
+  });
+  socket.on('progBluetooth', function (msg, longueur, state) {
 
+    etatEnvoiBluetooth = state;
     var i = 1, howManyTimes = 10;
 
     function f() {
-      if (ackTondeuse == true) {
-        i++;
-        ackTondeuse = false;
-      }
-      var str = "<" + msg[i] + ">";
-      port.write(str);
-      console.log(str);
+      if (etatEnvoiBluetooth) {
+        if (ackTondeuse == true) {
+          i++;
+          ackTondeuse = false;
+        }
+        var str = "<" + msg[i] + ">";
+        port.write(str);
+        console.log(str);
 
-      if (i < longueur - 1) {
-        setTimeout(f, 100);
+        if (i < longueur - 1) {
+          setTimeout(f, 100);
+        }
+        else {
+          io.sockets.emit('finishedSendingData');
+        }
       }
     }
     f();
+  });
 
-    // for (let i = 1; i < longueur - 1; i++) {
-    //   setTimeout(function () {
-    //   var str = "<" + msg[i] + ">";
-    //   port.write(str);
-    //   console.log(str);
-    // }, 1000); //delay is in milliseconds 
-    // }
-
+  socket.on('connectBluetooth', function (etat) {
+    var reponse;
+    if (etat) {
+      port.open(function (err) {
+        if (err) {
+          reponse = false;
+          io.sockets.emit('enableBouton', reponse);
+          return console.log('Error opening port: ', err.message)
+        }
+        else {
+          reponse = etat;
+          io.sockets.emit('enableBouton', reponse);
+        }
+      })
+    }
+    else {
+      port.close(function (err) {
+        if (err) {
+          reponse = false;
+          io.sockets.emit('enableBouton', reponse);
+          return console.log('Error closing port: ', err.message)
+        }
+        else {
+          reponse = etat;
+          io.sockets.emit('enableBouton', reponse);
+        }
+      })
+    }
   });
 });
 
@@ -89,7 +121,7 @@ const port = new SerialPort({
   dataBits: 8,
   parity: 'none',
   stopBits: 1,
-  autoOpen: true,
+  autoOpen: false,
 });
 
 port.on('error', function (err) {
@@ -98,6 +130,10 @@ port.on('error', function (err) {
 
 port.on('open', function () {
   console.log("COM 17 ouvert");
+});
+
+port.on('close', function () {
+  console.log("COM 17 fermé");
 });
 
 port.pipe(parser);

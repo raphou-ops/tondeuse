@@ -541,9 +541,9 @@
             var lng = waypointMVCArray.getAt(x).lng();
             if (x == 0) {
                 //Add first line twice (i.e. to set first point as home)
-                missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6))*1000000, (lng.toFixed(6))*1000000) + "\n";
+                missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6)) * 1000000, (lng.toFixed(6)) * 1000000) + "\n";
             }
-            missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6))*1000000, (lng.toFixed(6))*1000000) + "\n";
+            missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6)) * 1000000, (lng.toFixed(6)) * 1000000) + "\n";
         }
         return missionString;
     }
@@ -977,7 +977,8 @@
             </h1>
             </br></br></br>
             <div class="grid-container">
-
+                <button id="btConnection" onclick="connectionBluetooth()">Se connecter au Nomad</button>
+                <b id="textConnection">Non connecté</b>
                 <!-- Main -->
                 <main class="main-container">
 
@@ -1084,10 +1085,14 @@
                         </br>
                         <div>
                             Exporter le trajet du robot (.CSV):
-                            <input id="csv" type="file" accept=".csv">
+                            </br>
+                            <input id="csv" type="file" accept=".csv" class="file">
                         </div>
+                        <button id="submitButton">Envoyer</button>
+                        <button id="cancelButton" onclick="cancelEnvoiBtProg()">Arrêter</button>
                         <pre id="out"><p></p></pre>
                     </div>
+                    </br>
                 </div>
                 <div id="map"></div>
                 <!-- <script type="text/javascript" src="index.js"></script> -->
@@ -1098,6 +1103,7 @@
                 <!-- Global site tag (gtag.js) - Google Analytics -->
                 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-96994646-1"></script>
                 <!-- <script src="./js/analytics.js"></script> -->
+                </br></br></br></br></br>
             </div>
         </section>
 
@@ -1297,6 +1303,29 @@
                 contacter</a>
         </div>
     </div>
+    <script>
+        var switchButtonState = false;
+        function connectionBluetooth() {
+            switchButtonState = !switchButtonState;
+            console.log(switchButtonState);
+            document.getElementById("btConnection").disabled = true;
+            socket.emit('connectBluetooth', switchButtonState);
+        }
+        socket.on('enableBouton', function (reponse) {
+            document.getElementById("btConnection").disabled = false;
+            if (reponse) {
+                document.getElementById("btConnection").style.backgroundColor = '#66ff33';
+                document.getElementById("textConnection").innerHTML = "Connecté";
+                document.getElementById("btConnection").innerHTML = "Se déconnecter du Nomad";
+            }
+            else {
+                document.getElementById("btConnection").style.backgroundColor = '#ffffff';
+                document.getElementById("textConnection").innerHTML = "Non Connecté";
+                document.getElementById("btConnection").innerHTML = "Se connecter au Nomad";
+            }
+            switchButtonState = reponse;
+        });
+    </script>
 
     <script>
         // ---------- CHARTS ----------
@@ -1492,23 +1521,41 @@
             document.getElementById("commandeManette").innerHTML = msg;
         });
 
-        const fileInput = document.getElementById('csv')
-        const readFile = () => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                document.getElementById('out').innerHTML = "Le données on étés envoyées.";
-                var longueur = reader.result.split("\n").length;
-                var row = reader.result.split("\n");
-                console.log(row);
+        socket.on('finishedSendingData', function () {
+            document.getElementById('out').innerHTML = "Processus terminé !";
+        });
 
-                socket.emit('progBluetooth', row, longueur);
+        /*Fonction pour recuperer les coordonnes dans le fichier*/
 
-            }
-            // start reading the file. When it is done, calls the onload event defined above.
-            reader.readAsBinaryString(fileInput.files[0]);
+        const handleButtonClick = () => {
+            const fileInput = document.getElementById('csv');
+            const readFile = () => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    document.getElementById('out').innerHTML = "En processus d'envoi !";
+                    var longueur = reader.result.split("\n").length;
+                    var row = reader.result.split("\n");
+                    console.log(row);
+
+                    socket.emit('progBluetooth', row, longueur, true);
+                };
+                // start reading the file. When it is done, calls the onload event defined above.
+                reader.readAsBinaryString(fileInput.files[0]);
+            };
+
+            readFile();
+        };
+
+        function cancelEnvoiBtProg() {
+            socket.emit('cancelBluetoothProg');
+            document.getElementById('out').innerHTML = "L'envoi a été interrompu !";
+            const file = document.querySelector('.file');
+            if (file != null)
+                file.value = '';
         }
 
-        fileInput.addEventListener('change', readFile);
+        const submitButton = document.getElementById('submitButton');
+        submitButton.addEventListener('click', handleButtonClick);
 
         setInterval(envoiBluetooth, 100);
         gameLoop();

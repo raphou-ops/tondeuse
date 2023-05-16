@@ -228,7 +228,7 @@ uint8_t getId()
 	return trame;
 }
 
-float getNavPvtLat()
+long getNavPvtLat()
 {
 	uint8_t tabLat[4];
 	
@@ -239,10 +239,11 @@ float getNavPvtLat()
 	
 	long latitude = 0;
 	memcpy(&latitude, tabLat, sizeof(latitude));
-	return ((float)latitude)*1e-7; //en deg
+	return latitude;
+	//return ((float)latitude)*1e-7; //en deg
 }
 
-float getNavPvtLon()
+long getNavPvtLon()
 {
 	uint8_t tabLon[4];
 	
@@ -253,7 +254,8 @@ float getNavPvtLon()
 	
 	long longitude = 0;
 	memcpy(&longitude, tabLon, sizeof(longitude));
-	return ((float)longitude)*1e-7; //en deg
+	return longitude;
+	//return ((float)longitude)*1e-7; //en deg
 }
 
 float getNavPvtHeadMot() //heading motion 2-D

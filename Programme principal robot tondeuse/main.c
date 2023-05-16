@@ -18,6 +18,7 @@
 #include "lcd.h"
 #include "ZEDF9P.h"
 #include "LiDAR.h"
+#include "I2C.h"
 
 /*Variables globales et constantes GPS*/
 
@@ -69,12 +70,12 @@ char msgEncoG[8];
 
 /*Variables globales joystick physique*/
 
-int joysticX=0;
-int joysticY=0;
-uint16_t receptionAdc=0;
-uint8_t triAdc=0;
-int vitesseMoteurG=0;
-int vitesseMoteurD=0;
+int joysticX = 0;
+int joysticY = 0;
+uint16_t receptionAdc = 0;
+uint8_t triAdc = 0;
+int vitesseMoteurG = 0;
+int vitesseMoteurD= 0;
 
 #define BT2() ((PINA&(1<<0))==0)
 #define BT1() ((PINA&(1<<1))==0)
@@ -84,8 +85,6 @@ int vitesseMoteurD=0;
 #define JOYSTICK_X 1
 #define JOYSTICK_Y 2
 #define VIT_MIN 512
-
-char msg[8];
 
 /*Variables clavier matriciel*/
 
@@ -108,12 +107,25 @@ char tempsCoupe[5];
 enum gestionModes{MANUEL,PROG,AUTO,SET_TIME,SET_NIP,DEFAULT};
 enum gestionModes modeActuel = MANUEL;
 
-/*Declaration des fonctions*/
+/*Etats et pourcentage de la batterie*/
 
-void adcInit();//initialise l'adc
-void moteurInit();
-char lireClavier();
-void controleManuel();
+volatile float niveauBatterie=0;
+
+/*Variables pour pid*/
+#define KP 5
+#define KI 0.1
+#define KD 1
+
+//#define SOMME_MAX 10
+#define TAILLE_FENETRE 10
+//int sommeErreur[SOMME_MAX];
+int window[TAILLE_FENETRE];
+int erreur=0;//déjà calculé, proportionnel
+int valSommeErreur=0;// intégrale
+int erreurPrec=0;
+int variation=0;//dérivé
+int valPid=0;
+uint8_t cntSommeErreur=0;
 
 /*Variables timer0 refresh du systeme*/
 
@@ -123,14 +135,31 @@ volatile uint8_t refreshManuel = 1;
 volatile uint8_t refreshClavier = 0;
 volatile uint8_t refreshLCD = 0;
 
+/*Variables calcul compas*/
 
+float distance=0;
+float angleDest=0;
+float angleActuel=0;
 
+/*Declaration des fonctions*/
+
+void adcInit();//initialise l'adc
+void moteurInit();
+char lireClavier();
+void controleManuel();
+uint8_t tourner(uint16_t angleDest, uint16_t angleActuel);
+void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel);//avec pid
+void retourMaison();
+void effectuerCalibration();
+void initBoussole();
 
 /*Programme principal*/
 
 int main(void)
 {
 	lcdInit();
+	initBoussole();
+	setSmoothing(10,1);
 	
 	PORTA|=0x0F;//initclavier
 	
@@ -201,7 +230,8 @@ int main(void)
 	lcdPuts("Mode Manuel  <-");
 	
 	while (1)
-	{		if(refreshClavier)
+	{
+		if(refreshClavier)
 		{
 			refreshClavier = 0;
 			key = lireClavier();
@@ -357,11 +387,105 @@ int main(void)
 				dataGps = usartGpsRemRxData();
 				if(parseRxUbxNavPvt(dataGps))
 				{
-					sprintf(msgGpsLat, "%f", getNavPvtLat());
-					sprintf(msgGpsLon, "%f", getNavPvtLon());
+					lcdClearScreen();
+					lcdSetPos(0,0);
+					sprintf(msgGpsLat, "%ld", getNavPvtLat());
+					lcdPuts(msgGpsLat);
+					lcdSetPos(0,1);
+					sprintf(msgGpsLon, "%ld", getNavPvtLon());
+					lcdPuts(msgGpsLon);
 					getNavPvtTime(msgTime);
 				}
 			}
+			/*
+			void retourMaison()
+			{
+
+			}
+			uint8_t isArrivedToWaypoint()
+			{
+			if()//si latitude et longitude sont exact
+			{
+			return 1;
+			}
+
+			return 0;
+			}
+			uint8_t waypointsAvailable()
+			{
+			//if( cntwaypoint<cntwaypointMax)
+			{
+			return 1;
+			}
+			return 0;
+			}
+			uint8_t setNextWaypoint()
+			{
+			if ()//si il reste des waypoint
+			{
+			return 1;
+			}
+			return 0;
+			}
+
+
+			void modeAutomatique()
+			{
+			//setNextWaypoint(); to start point
+			//recule de la base 50cm
+			//tourner();
+			//if(!isArrivedToWaypoint())
+			//ajusterDrirection();
+			//arrivé sur le terrain et commence le parcours
+			if(waypointsAvailable())
+			{
+			setNextWaypoint();
+			tourner()
+			while(!isArrivedToWaypoint())
+			{
+			ajusterDrirection();
+			}
+			}
+			else
+			{
+			retourMaison();
+			//suis le périmètre jusqu'au point go
+			//va à la station de départ;
+			}
+			
+			}
+			
+			
+			distance=distance_entre_point(LAT1,LON1,LAT2,LON2);
+			sprintf(msg,"%f", distance);
+			lcdPuts(msg);
+			angleDest=course(LAT1,LON1,LAT2,LON2);
+			lcdSetPos(0,1);
+			sprintf(msg,"%f", angleDest);
+			lcdPuts(msg);
+			
+			
+			i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);
+			lcdSetPos(11,0);
+			angleActuel=getAzimuth();
+			sprintf(msg,"%f",angleActuel);
+			lcdPuts(msg);
+			angleDest=323;
+
+			if(tourner(angleDest,angleActuel)&& etape==0)
+			{
+				etape=1;
+			}
+			else
+			{
+				lcdSetPos(11,1);
+				lcdPuts("    ");
+			}
+			if(etape==1)
+			{
+				ajusterDrirection(angleDest,angleActuel);
+			}
+			*/
 			break;
 			
 			case SET_TIME:
@@ -468,7 +592,6 @@ int main(void)
 						essaiUser[cntPassword++] = key;
 						lcdPutc(key);
 					}
-					lastKey = key;
 					if(cntPassword == 4)
 					{
 						for(uint8_t index = 0; index<4; index++)
@@ -489,7 +612,7 @@ int main(void)
 				}
 			}while(!passwordValid);
 			break;
-			default:
+			case DEFAULT:
 			//case pour la sortie de menus mot de passe et set time
 			break;
 		}
@@ -553,38 +676,28 @@ ISR(ADC_vect)
 	switch(triAdc)
 	{
 		case 0x0:
-		// 		sprintf(msg,"p:%d",receptionAdc);
-		// 		lcdSetPos(8,0);
-		// 		lcdPuts(msg);
+		if(receptionAdc<=512)
+		{
+			lcdSetPos(8,1);
+			lcdPuts("pluie");
+		}
 		ADMUX=0x41;
 		break;
 
 		case 0x1:
 		joysticX=receptionAdc-512;
-		// 		lcdSetPos(0,0);
-		// 		lcdPuts("      ");
-		// 		sprintf(msg,"x:%d",joysticX);
-		// 		lcdSetPos(0,0);
-		// 		lcdPuts(msg);
-
 		ADMUX=0x42;
 		break;
 
 		case 0x2:
 		joysticY=receptionAdc-512;
-		// 		sprintf(msg,"y:%d",joysticY);
-		// 		lcdSetPos(0,1);
-		// 		lcdPuts("      ");
-		// 		lcdSetPos(0,1);
-		// 		lcdPuts(msg);
 		ADMUX=0x40;
 		ADCSRB|=(1<<MUX5);
 		break;
 
 		case 0x20:
-		// 		sprintf(msg,"b:%d",receptionAdc);
-		// 		lcdSetPos(8,1);
-		// 		lcdPuts(msg);
+		niveauBatterie=((float)receptionAdc/1023.0)*100.0;
+		niveauBatterie=(niveauBatterie-75.0)*4.0;
 		ADMUX=0x40;
 		ADCSRB&=~(1<<MUX5);
 		break;
@@ -608,7 +721,7 @@ void adcInit()
 }
 void moteurInit()
 {
-	DDRH|=(1<<4)|(1<<5);//moteur arrière2
+	DDRH|=(1<<4)|(1<<5);//moteur arrière 2 gauche
 
 	TCCR4A=0b10101011;
 	TCCR4B=0b00011001;
@@ -616,7 +729,7 @@ void moteurInit()
 	OCR4B=70;
 	OCR4C=0;
 
-	DDRL|=(1<<4)|(1<<5);//moteur arrière 1
+	DDRL|=(1<<4)|(1<<5);//moteur arrière 1 droite
 	TCCR5A=0b10101011;
 	TCCR5B=0b00011001;
 	OCR5A=1024;//top
@@ -704,4 +817,148 @@ void controleManuel()
 			OCR5C=(VIT_MIN+vitesseMoteurG);
 		}
 	}
+}
+void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=angleActuel-angleDest peut-être mettre juste une fonction pour tourner et ajuster
+{
+	//si pas de derive avance en ligne droite avec les valeurs de pid vitesseMoteur max =512
+
+	//ocr1B controle de la lame 1024 actif 0 inactif
+	//if(OCR1B!=1024)
+	//OCR1B=1024;
+	uint8_t cote=0;
+	int deltaDerive=angleDest-angleActuel;
+	//variation=erreur-erreurPrec;
+	//quel côté affecter
+	uint16_t angle=0;
+
+	if(deltaDerive<0)
+	{
+		deltaDerive=-1;
+		angle=deltaDerive+360;
+	}
+	else
+	angle=deltaDerive;
+
+	if(angle<180)
+	{// tourne à droite
+		cote=0;
+	}
+	else
+	{//tourne à gauche
+		cote=1;
+	}
+
+
+	//fenêtre
+	for (int i = (TAILLE_FENETRE-1); i > 0; i--) {
+		window[i] = window[i - 1];
+	}
+	window[0] = deltaDerive;
+	//ki
+	for (int i = 0; i < TAILLE_FENETRE; i++) {
+		valSommeErreur = window[i];//+=
+	}
+	//kd
+	//variation = window[0] - window[TAILLE_FENETRE-1];
+
+	valPid=KP*deltaDerive+KI*valSommeErreur/*+KD*variation*/;
+	//vérification
+	if(valPid>412)
+	valPid=412;
+	if(valPid<0)
+	valPid=0;
+	//application du pid
+	if(cote==0)
+	{//droite
+		OCR4B=0;
+		OCR5B=(VIT_MIN+443-valPid);
+		OCR4C=(VIT_MIN+512);
+		OCR5C=0;
+	}
+	else
+	{//gauche
+		OCR4B=0;
+		OCR5B=(VIT_MIN+443);
+		OCR4C=(VIT_MIN+512-valPid);
+		OCR5C=0;
+	}
+	//erreurPrec=deltaDerive;
+}
+uint8_t tourner(uint16_t angleDest, uint16_t angleActuel)
+{
+	//if(OCR1B!=1024)//active la lame
+	//OCR1B=1024;
+	//appeler lorsque l'on arrive à un waypoints
+	int deltaDerive=angleDest-angleActuel;
+	static uint8_t direction;
+	uint16_t angle=0;
+
+	if(deltaDerive<0)
+	angle=deltaDerive+360;
+	else
+	angle=deltaDerive;
+
+	if(angle<180)
+	{
+		direction=0;//doit corriger vers la droite
+
+	}
+	else
+	{
+		direction=1;//doit corriger vers la gauche
+
+	}
+
+
+	if(direction)
+	{
+		if(deltaDerive<2 && deltaDerive>-2)//tourner vers gauche
+		{
+
+			return 1;
+		}
+		else
+		{
+			OCR4B=(VIT_MIN+369);//on vitesse à déterminer VIT_MIN+vitesseMoteurD;
+			OCR5B=(VIT_MIN+300);//on 69 diff
+			OCR4C=0;
+			OCR5C=0;
+		}
+	}
+	else
+	{
+		if(deltaDerive>-5 && deltaDerive<5)//tourner vers droite
+		{
+			return 1;
+		}
+		else
+		{
+			OCR4B=0;
+			OCR5B=0;
+			OCR4C=(VIT_MIN+369);//moteurs inégal 512
+			OCR5C=(VIT_MIN+300);//443
+
+		}
+	}
+	return 0;
+}
+void effectuerCalibration()
+{
+	while(!calibration())
+	{
+		OCR4B=0;
+		OCR5B=0;
+		OCR4C=(VIT_MIN+512);//moteurs inégal
+		OCR5C=(VIT_MIN+445);//moteur droit
+	}
+	OCR4B=0;
+	OCR5B=0;
+	OCR4C=0;
+	OCR5C=0;
+}
+void initBoussole()
+{
+	i2cInit();
+	i2cWriteByte(QMC5883_ADDRESS_MAG,0x0B,0x01);
+	setMode(0x01,0x0C,0x10,0X00);
 }

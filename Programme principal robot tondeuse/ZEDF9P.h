@@ -37,11 +37,12 @@ unsigned char getNavPvtFixType();
 uint8_t getNavPvtFlags();
 uint8_t getNavPvtFlags2();
 // uint8_t getNavPvtNumSv();
-long getNavPvtLon();
-long getNavPvtLat();
+float getNavPvtLon();
+float getNavPvtLat();
 // uint8_t getNavPvtHeight();
 // uint8_t getNavPvtHmsl();
 unsigned long getNavPvtHacc();
+unsigned long getNavPvtVacc();
 // uint8_t getNavPvtVacc();
 // uint8_t getNavPvtVelN();
 // uint8_t getNavPvtVelE();
@@ -50,7 +51,9 @@ long getNavPvtGspeed();
 float getNavPvtHeadMot();
 unsigned long getNavPvtSacc();
 float getNavPvtHeadAcc();
-// uint8_t getNavPvtPdop();
+float getNavPvtPdop();
+
+
 // uint8_t getNavPvtReserved1();
 float getNavPvtHeadVeh();
 // uint8_t getNavPvtMagDec();

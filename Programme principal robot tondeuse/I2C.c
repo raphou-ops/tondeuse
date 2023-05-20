@@ -222,6 +222,7 @@ float distance_entre_point(float lat1,float lon1,float lat2,float lon2)
 	float a = sin(dlat/2) * sin(dlat/2) + cos(deg_toRad(lat1)) * cos(deg_toRad(lat2)) * sin(dlon/2) * sin(dlon/2);
 	float c = 2 * atan2(sqrt(a), sqrt(1 - a));
 	float distance = RAYON_TERRE * c;
+	
 	return distance;
 }
 float toDegrees(float radians)

@@ -38,18 +38,35 @@ char msgTime[20];
 uint8_t pos = 0;
 uint8_t row = 0;
 uint8_t cnt;
-float lat = 0;
-float lon = 0;
+float lat = 0.000000;
+float lon = 0.000000;
+unsigned long verticalAcc=0.0;
+unsigned long horizontalAcc=0.0;
 uint8_t dataGps;
 uint8_t setRate[14]={0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0xE8, 0x03, 0x01, 0x00, 0x00, 0x00, 0x00, 0x37};
 
 /*Variables globales Bluetooth*/
 
 uint8_t dataBluetooth = 0;
-long tabLatMem[80];
-long tabLonMem[80];
-uint8_t cnt1 = 0;
-uint8_t cnt2 = 0;
+//long tabLatMem[80];
+//long tabLonMem[80];
+
+uint16_t nbPointGpsDispo=3;//0
+enum EtapeModeAuto{ORIENTER,TOURNER,AJUSTER,TEST};
+enum EtapeModeAuto etapeModeAuto=ORIENTER;
+uint16_t indexDestination=0; //0 si jamais le traitement bogue
+float tabLatMem[3]={45.644507,45.644553,45.644467};
+float tabLonMem[3]={-73.842252,-73.842383,-73.842328};
+
+float tabLatMemJs[100];
+float tabLonMemJs[100];
+//long tabLonMem[100];
+//long tabLatMem[100];
+
+uint8_t cntLatMemoireJs = 0;
+uint8_t cntLonMemoireJs = 0;
+enum Orientation{DISTANCE,ANGLE,FINI};
+enum Orientation orientation=DISTANCE;
 //controle manette ps4 joystickX et joystickY dans section joystick physique
 
 /*Variables globales LiDAR*/
@@ -134,13 +151,27 @@ volatile uint16_t cntDixiemeDeSecLCD = 0;
 volatile uint8_t refreshManuel = 1;
 volatile uint8_t refreshClavier = 0;
 volatile uint8_t refreshLCD = 0;
+volatile uint8_t refreshEnvoi = 0;
+volatile uint8_t refreshAuto = 0;
+
 
 /*Variables calcul compas*/
 
-float distance=0;
+float distanceDest=0;
 float angleDest=0;
 float angleActuel=0;
+float distanceMoyParcouru=0;
 
+/*Variables Bluetooth envoi vers la tondeuse*/
+char msgEnvoi[50];
+uint8_t flagPluie = 0;
+uint8_t flagLidar = 0;
+uint16_t distanceObjet = 0;
+uint8_t etatCoupe = 0;
+uint8_t flagCalibration = 0;
+uint8_t toucheManette = 0;
+
+float PDOP = 0;
 /*Declaration des fonctions*/
 
 void adcInit();//initialise l'adc
@@ -149,9 +180,11 @@ char lireClavier();
 void controleManuel();
 uint8_t tourner(uint16_t angleDest, uint16_t angleActuel);
 void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel);//avec pid
-void retourMaison();
+void retourMaison(float latitudeMaison,float longitudeMaison);
+void sortieMaison();
 void effectuerCalibration();
 void initBoussole();
+
 
 /*Programme principal*/
 
@@ -186,10 +219,8 @@ int main(void)
 	usartGpsInit(9600,16000000);
 	usart2Init(115200,16000000);
 	
-	envoieConfigPortUart1(9600);
-	envoieConfigRate(1);
-	envoieConfigMsg(PVT,USART1_ON,USB_ON);
-	usartGpsSendBytes(setRate,14);
+	
+	//usartGpsSendBytes(setRate,14);
 	
 	do{
 		if(refreshClavier)
@@ -224,10 +255,15 @@ int main(void)
 			lastKey = key;
 		}
 	}while(!passwordValid);
+	envoieConfigPortUart1(9600);
+	envoieConfigRate(1);
+	envoieConfigMsg(PVT,USART1_ON,USB_ON);
 	passwordValid = 0;
 	lcdClearScreen();
 	lcdSetPos(0,0);
 	lcdPuts("Mode Manuel  <-");
+	effectuerCalibration();
+	_delay_ms(100);
 	
 	while (1)
 	{
@@ -264,6 +300,8 @@ int main(void)
 					{
 						modeActuel = SET_NIP;
 					}
+					cntLatMemoireJs = 0;
+					cntLonMemoireJs = 0;
 					set = 1;
 					break;
 					
@@ -322,6 +360,13 @@ int main(void)
 		{
 			case MANUEL:
 			controleManuel();
+			if(usart2RxAvailable())
+			{
+				dataBluetooth = usart2RemRxData();
+				parseBluetoothManuel(dataBluetooth);
+			}
+			joysticX = getJoystickGaucheX();
+			joysticY = getJoystickGaucheY();
 			if(getBoutonX() == 0x31)
 			{
 				OCR1B=1024;
@@ -332,102 +377,177 @@ int main(void)
 				OCR1B=90;
 				DDRB &= ~(1<<6);
 			}
-			if(refreshLCD)
+			toucheManette = getBoutonO();
+			if((toucheManette == 0x31)&&(flagCalibration!=0x31))
 			{
-				refreshLCD = 0;
-				lcdSetPos(0,1);
-				lcdPuts(msgTime);
+				effectuerCalibration();
 			}
-			if(usart2RxAvailable())
-			{
-				dataBluetooth = usart2RemRxData();
-				if(parseBluetoothManuel(dataBluetooth))
-				{
-					joysticX = getJoystickGaucheX();
-					joysticY = getJoystickGaucheY();
-				}
-			}
+			flagCalibration = toucheManette;
+			
+			// 			if(refreshLCD)
+			// 			{
+			// 				refreshLCD = 0;
+			// 				lcdSetPos(0,1);
+			// 				lcdPuts(msgTime);
+			// 			}
 			break;
 			
 			case PROG:
 			if(usart2RxAvailable())
 			{
-				//_delay_ms(10);
 				dataBluetooth = usart2RemRxData();
 				if(parseBluetoothAuto(dataBluetooth))
 				{
-					tabLatMem[cnt1++] = getLat();
-					tabLonMem[cnt2++] = getLon();
-					usart2SendString("S;ack;");
+					tabLatMemJs[cntLatMemoireJs++] = (float)(getLat()*(1e-6));
+					tabLonMemJs[cntLonMemoireJs++] = (float)(getLon()*(1e-6));
+					usart2SendString("C;ack;");
+					nbPointGpsDispo++;
 				}
 			}
-			lcdSetPos(0,1);
-			lcdPuts(msgTime);
 			break;
 			
 			case AUTO:
-			if(refreshLCD)
-			{
-				refreshLCD = 0;
-				lcdSetPos(0,1);
-				lcdPuts(msgTime);
-			}
+			// 			if(refreshLCD)
+			// 			{
+			// 				refreshLCD = 0;
+			// 				lcdSetPos(0,1);
+			// 				lcdPuts(msgTime);
+			// 			}
 			
 			if(usart0RxAvailable())
 			{
 				dataLiDAR = usart0RemRxData();
 				if(parseRxLidar(dataLiDAR))
 				{
-					sprintf(msgLiDAR,"%d",getDist());
-					//sprintf(msgBluetooth,"S;%f;%f;%d;%d;%d;%d;",lat,lon,45,3200,6700,70);
+					distanceObjet = getDist();
 				}
 			}
-			if(usartGpsRxAvailable())
+			if(distanceObjet <= 14)
 			{
-				dataGps = usartGpsRemRxData();
-				if(parseRxUbxNavPvt(dataGps))
+				flagLidar = 1;
+			}
+			else
+			{
+				flagLidar = 0;
+			}
+			
+			if(etapeModeAuto!=ORIENTER)
+			dataGps = usartGpsRemRxData();
+			
+			if(refreshAuto)
+			{
+				refreshAuto = 0;
+				i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
+				angleActuel=getAzimuth();
+			}
+			lcdSetPos(0,0);
+			sprintf(msgTime, "%d",getNavPvtVacc());
+			lcdPuts(msgTime);
+			lcdSetPos(0,1);
+			sprintf(msgTime,"%d",getNavPvtHacc());
+			//sprintf(msgTime,"%f",angleActuel);
+			lcdPuts(msgTime);
+			
+			
+			/*refreshAuto = 0;
+			lcdSetPos(0,0);
+			sprintf(msgTime,"%f",getNavPvtLat());
+			lcdPuts(msgTime);
+			lcdSetPos(0,1);
+			sprintf(msgTime,"%f",getNavPvtLon());
+			lcdPuts(msgTime);*/
+			
+			
+			
+			//getNavPvtTime(msgTime);
+			if(nbPointGpsDispo>0)
+			{
+				switch(etapeModeAuto)
 				{
-					lcdClearScreen();
-					lcdSetPos(0,0);
-					sprintf(msgGpsLat, "%ld", getNavPvtLat());
-					lcdPuts(msgGpsLat);
-					lcdSetPos(0,1);
-					sprintf(msgGpsLon, "%ld", getNavPvtLon());
-					lcdPuts(msgGpsLon);
-					getNavPvtTime(msgTime);
+					case ORIENTER:
+					dataGps = usartGpsRemRxData();
+					if(parseRxUbxNavPvt(dataGps))
+					{
+						if(getNavPvtFixType()>=3)//3d fix
+						{
+							lat=getNavPvtLat();
+							lon=getNavPvtLon();
+							horizontalAcc=getNavPvtVacc();//en mm
+							verticalAcc=getNavPvtHacc();//en mm
+							//PDOP = getNavPvtPdop();
+							if(horizontalAcc<=40 && verticalAcc<=40)//check precision 2d,horizon, et 3d,vertical,
+							{
+								//indexIndentation pour test tabLatMem[indexDestination]
+								switch (orientation)
+								{
+									case DISTANCE:
+									distanceDest=distance_entre_point(lat,lon,tabLatMemJs[indexDestination],tabLonMemJs[indexDestination]);//lat actuel, lon actuel, lat dest,lon dest
+									orientation=ANGLE;
+									break;
+									
+									case ANGLE:
+									angleDest=course(lat, lon,tabLatMemJs[indexDestination],tabLonMemJs[indexDestination]);//index=1 depart
+									orientation=FINI;
+									break;
+									
+									case FINI:
+									etapeModeAuto=TOURNER;
+									orientation=DISTANCE;
+									break;
+								}
+							}
+						}
+					}
+					break;
+					
+					case TOURNER:
+					if(tourner(angleDest,angleActuel))
+					{
+						encodeurDCnt=0;
+						encodeurGCnt=0;
+						etapeModeAuto=AJUSTER;
+					}
+					
+
+					break;
+					case AJUSTER:
+					ajusterDrirection(angleDest,angleActuel);
+					distanceMoyParcouru= ((encodeurDCnt+encodeurGCnt)/2)*3.45;
+					if(distanceMoyParcouru>=distanceDest)
+					{
+						//etapeModeAuto=TEST;
+						etapeModeAuto=ORIENTER;
+						indexDestination++;
+						nbPointGpsDispo--;
+					}
+					break;
+					/*case TEST:
+					OCR4B=0;
+					OCR5B=0;
+					OCR4C=0;
+					OCR5C=0;
+					break;*/
 				}
 			}
+			else
+			{
+				OCR4B=0;
+				OCR5B=0;
+				OCR4C=0;
+				OCR5C=0;
+			}
+			
+			
+
+			
+			
+			//getNavPvtTime(msgTime);
+			
 			/*
 			void retourMaison()
 			{
 
 			}
-			uint8_t isArrivedToWaypoint()
-			{
-			if()//si latitude et longitude sont exact
-			{
-			return 1;
-			}
-
-			return 0;
-			}
-			uint8_t waypointsAvailable()
-			{
-			//if( cntwaypoint<cntwaypointMax)
-			{
-			return 1;
-			}
-			return 0;
-			}
-			uint8_t setNextWaypoint()
-			{
-			if ()//si il reste des waypoint
-			{
-			return 1;
-			}
-			return 0;
-			}
-
 
 			void modeAutomatique()
 			{
@@ -453,37 +573,6 @@ int main(void)
 			//va à la station de départ;
 			}
 			
-			}
-			
-			
-			distance=distance_entre_point(LAT1,LON1,LAT2,LON2);
-			sprintf(msg,"%f", distance);
-			lcdPuts(msg);
-			angleDest=course(LAT1,LON1,LAT2,LON2);
-			lcdSetPos(0,1);
-			sprintf(msg,"%f", angleDest);
-			lcdPuts(msg);
-			
-			
-			i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);
-			lcdSetPos(11,0);
-			angleActuel=getAzimuth();
-			sprintf(msg,"%f",angleActuel);
-			lcdPuts(msg);
-			angleDest=323;
-
-			if(tourner(angleDest,angleActuel)&& etape==0)
-			{
-				etape=1;
-			}
-			else
-			{
-				lcdSetPos(11,1);
-				lcdPuts("    ");
-			}
-			if(etape==1)
-			{
-				ajusterDrirection(angleDest,angleActuel);
 			}
 			*/
 			break;
@@ -566,6 +655,7 @@ int main(void)
 						case '4':
 						cntMenu = 3;
 						modeActuel = DEFAULT;
+						modeTondeuse = 5;
 						setTemps = 1;
 						lcdClearScreen();
 						memset(tempsCoupe, 0, sizeof(tempsCoupe));
@@ -600,6 +690,7 @@ int main(void)
 						}
 						cntMenu = 4;
 						modeActuel = DEFAULT;
+						modeTondeuse = 5;
 						passwordValid = 1;
 						cntPassword = 0;
 						lcdClearScreen();
@@ -615,6 +706,14 @@ int main(void)
 			case DEFAULT:
 			//case pour la sortie de menus mot de passe et set time
 			break;
+		}
+		if((refreshEnvoi)&&(modeTondeuse!=1))
+		{
+			refreshEnvoi = 0;
+			float latEnvoi = getNavPvtLat();
+			float longEnvoi = getNavPvtLon();
+			sprintf(msgEnvoi,"S;%.2f;%d;%d;%d;%f;%f;%d;",niveauBatterie,flagPluie,etatCoupe,flagLidar,latEnvoi,longEnvoi,modeTondeuse);
+			usart2SendString(msgEnvoi);
 		}
 	}
 	
@@ -641,16 +740,18 @@ ISR(TIMER0_COMPA_vect)//Quand l'interruption globale est appeller le programme v
 {
 	cntDixiemeDeSec++;
 	cntDixiemeDeSecLCD++;
+	refreshAuto = 1;
 	if(cntDixiemeDeSec >= 100)
 	{
 		cntDixiemeDeSec -= 100;
 		refreshManuel = 1;
 		refreshClavier = 1;
 	}
-	if(cntDixiemeDeSecLCD >= 500)
+	if(cntDixiemeDeSecLCD >= 300)
 	{
-		cntDixiemeDeSecLCD -= 500;
+		cntDixiemeDeSecLCD -= 300;
 		refreshLCD = 1;
+		refreshEnvoi = 1;
 	}
 }
 ISR(PCINT1_vect)//A chaque detection du capteur une interruption se fait sur PCINT4 et PCINT5 qui correspond a la PINB4 et PINB5 du atmega32u4
@@ -680,17 +781,22 @@ ISR(ADC_vect)
 		{
 			lcdSetPos(8,1);
 			lcdPuts("pluie");
+			flagPluie = 1;
+		}
+		else
+		{
+			flagPluie = 0;
 		}
 		ADMUX=0x41;
 		break;
 
 		case 0x1:
-		joysticX=receptionAdc-512;
+		//joysticX=receptionAdc-512;
 		ADMUX=0x42;
 		break;
 
 		case 0x2:
-		joysticY=receptionAdc-512;
+		//joysticY=receptionAdc-512;
 		ADMUX=0x40;
 		ADCSRB|=(1<<MUX5);
 		break;
@@ -817,6 +923,8 @@ void controleManuel()
 			OCR5C=(VIT_MIN+vitesseMoteurG);
 		}
 	}
+	
+	
 }
 void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=angleActuel-angleDest peut-être mettre juste une fonction pour tourner et ajuster
 {
@@ -861,7 +969,7 @@ void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=a
 	//kd
 	//variation = window[0] - window[TAILLE_FENETRE-1];
 
-	valPid=KP*deltaDerive+KI*valSommeErreur/*+KD*variation*/;
+	valPid=KP*deltaDerive/*+KI*valSommeErreur+KD*variation*/;
 	//vérification
 	if(valPid>412)
 	valPid=412;
@@ -871,14 +979,14 @@ void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=a
 	if(cote==0)
 	{//droite
 		OCR4B=0;
-		OCR5B=(VIT_MIN+443-valPid);
+		OCR5B=(VIT_MIN+450-valPid);
 		OCR4C=(VIT_MIN+512);
 		OCR5C=0;
 	}
 	else
 	{//gauche
 		OCR4B=0;
-		OCR5B=(VIT_MIN+443);
+		OCR5B=(VIT_MIN+450);
 		OCR4C=(VIT_MIN+512-valPid);
 		OCR5C=0;
 	}
@@ -949,7 +1057,7 @@ void effectuerCalibration()
 		OCR4B=0;
 		OCR5B=0;
 		OCR4C=(VIT_MIN+512);//moteurs inégal
-		OCR5C=(VIT_MIN+445);//moteur droit
+		OCR5C=(VIT_MIN+450);//moteur droit
 	}
 	OCR4B=0;
 	OCR5B=0;

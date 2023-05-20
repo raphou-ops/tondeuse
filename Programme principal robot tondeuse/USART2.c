@@ -31,11 +31,15 @@ enum etatsBtRx{DEBUT_TRAME,PAYLOAD,VALIDATE};
 enum etatsBtRx etats = DEBUT_TRAME;
 enum etatsBtRx etatProg = DEBUT_TRAME;
 uint8_t trameBluetoothRx[TRAME_BLUETOOTH_SIZE];
+uint8_t trameBluetoothRxManette[TRAME_BLUETOOTH_SIZE];
 uint8_t trameBluetoothValide[TRAME_BLUETOOTH_SIZE];
+uint8_t trameBluetoothValideManette[TRAME_BLUETOOTH_SIZE];
 uint8_t indexBluetooth = 0;
 uint8_t indexBluetoothProg = 0;
 char tabX[5] = "";
 char tabY[5] = "";
+int joystickReceptionX = 0;
+int joystickReceptionY = 0;
 char tabLat4[9];
 char tabLon4[10];
 uint8_t boutonX = 0;
@@ -189,6 +193,8 @@ uint8_t parseBluetoothManuel(uint8_t data)
 		if(data == '<')
 		{
 			indexBluetooth = 0;
+			memset(trameBluetoothValideManette, 0, sizeof(trameBluetoothValideManette));
+			memset(trameBluetoothRxManette, 0, sizeof(trameBluetoothRxManette));
 			etats = PAYLOAD;
 		}
 		break;
@@ -200,7 +206,7 @@ uint8_t parseBluetoothManuel(uint8_t data)
 		}
 		else
 		{
-			trameBluetoothRx[indexBluetooth++] = data;
+			trameBluetoothRxManette[indexBluetooth++] = data;
 		}
 		break;
 		
@@ -211,30 +217,36 @@ uint8_t parseBluetoothManuel(uint8_t data)
 		memset(tabY, 0, sizeof(tabY));
 		for(uint8_t i = 0; i<indexBluetooth; i++)
 		{
-			trameBluetoothValide[i] = trameBluetoothRx[i];
+			trameBluetoothValideManette[i] = trameBluetoothRxManette[i];
 			
 			if(status == 0)
-			tabX[i] = trameBluetoothValide[i];
+			tabX[i] = trameBluetoothValideManette[i];
 			
 			if(status == 1)
-			tabY[z++] = trameBluetoothValide[i];
+			tabY[z++] = trameBluetoothValideManette[i];
 			
-			if(trameBluetoothValide[i] == ';')
+			if(trameBluetoothValideManette[i] == ';')
 			status++;
 			
 			if(status == 2)
-			boutonX = trameBluetoothValide[i];
+			boutonX = trameBluetoothValideManette[i];
 			
 			if(status == 3)
-			boutonO = trameBluetoothValide[i];
+			boutonO = trameBluetoothValideManette[i];
 			
 			if(status == 4)
 			{
-				boutonTriangle = trameBluetoothValide[i];
+				boutonTriangle = trameBluetoothValideManette[i];
 			}
 			
 		}
-		valide = 1;
+		joystickReceptionX = atoi(tabX);
+		joystickReceptionY = atoi(tabY);
+		//joystickReceptionY^=1;
+		if((joystickReceptionX!=0)&&(joystickReceptionY!=0))
+		{
+			valide = 1;
+		}
 		etats = DEBUT_TRAME;
 		break;
 	}
@@ -279,6 +291,7 @@ uint8_t parseBluetoothAuto(uint8_t data)
 		tabLat4[5]=trameBluetoothValide[7];
 		tabLat4[6]=trameBluetoothValide[8];
 		tabLat4[7]=trameBluetoothValide[9];
+		//tabLat4[8]=trameBluetoothValide[10];
 		tabLat4[8]='\0';
 		
 		latitudeRx = atol(tabLat4);
@@ -292,6 +305,7 @@ uint8_t parseBluetoothAuto(uint8_t data)
 		tabLon4[6]=trameBluetoothValide[17];
 		tabLon4[7]=trameBluetoothValide[18];
 		tabLon4[8]=trameBluetoothValide[19];
+		//tabLon4[9]=trameBluetoothValide[21];
 		tabLon4[9]='\0';
 		
 		longitudeRx = atol(tabLon4);
@@ -308,11 +322,11 @@ uint8_t parseBluetoothAuto(uint8_t data)
 
 int getJoystickGaucheX()
 {
-	return atoi(tabX);
+	return joystickReceptionX;
 }
 int getJoystickGaucheY()
 {
-	return atoi(tabY);
+	return joystickReceptionY;
 }
 uint8_t getBoutonX()
 {

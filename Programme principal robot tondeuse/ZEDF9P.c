@@ -228,7 +228,7 @@ uint8_t getId()
 	return trame;
 }
 
-long getNavPvtLat()
+float getNavPvtLat()
 {
 	uint8_t tabLat[4];
 	
@@ -239,11 +239,11 @@ long getNavPvtLat()
 	
 	long latitude = 0;
 	memcpy(&latitude, tabLat, sizeof(latitude));
-	return latitude;
-	//return ((float)latitude)*1e-7; //en deg
+	//return latitude;
+	return ((float)latitude)*1e-7; //en deg
 }
 
-long getNavPvtLon()
+float getNavPvtLon()
 {
 	uint8_t tabLon[4];
 	
@@ -254,8 +254,8 @@ long getNavPvtLon()
 	
 	long longitude = 0;
 	memcpy(&longitude, tabLon, sizeof(longitude));
-	return longitude;
-	//return ((float)longitude)*1e-7; //en deg
+	//return longitude;
+	return ((float)longitude)*1e-7; //en deg
 }
 
 float getNavPvtHeadMot() //heading motion 2-D
@@ -341,6 +341,19 @@ unsigned long getNavPvtHacc() //horizontal accuracy estimate
 	memcpy(&hAcc, tabHacc, sizeof(hAcc));
 	return hAcc; //en mm
 }
+unsigned long getNavPvtVacc() //horizontal accuracy estimate
+{
+	uint8_t tabVacc[4];
+	
+	tabVacc[0] = trameGpsNavPvtValide[50];
+	tabVacc[1] = trameGpsNavPvtValide[51];
+	tabVacc[2] = trameGpsNavPvtValide[52];
+	tabVacc[3] = trameGpsNavPvtValide[53];
+	
+	unsigned long vAcc = 0;
+	memcpy(&vAcc, tabVacc, sizeof(vAcc));
+	return vAcc; //en mm
+}
 
 uint8_t getNavPvtFlags() //fix status flags
 {
@@ -365,6 +378,20 @@ unsigned char getNavPvtFixType()
 	
 	return etatFixGps;
 }
+float getNavPvtPdop()
+{
+	uint16_t pDOP = 0;
+	uint8_t tabPdop[2];
+	
+	tabPdop[0] = trameGpsNavPvtValide[82];
+	tabPdop[1] = trameGpsNavPvtValide[83];
+	
+	memcpy(&pDOP, tabPdop, sizeof(pDOP));
+	//return longitude;
+	return ((float)pDOP)/100.0; //en deg
+}
+
+
 
 // unsigned long getNavOdoDistance()
 // {

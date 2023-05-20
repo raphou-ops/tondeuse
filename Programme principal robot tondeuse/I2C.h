@@ -10,7 +10,7 @@
 #include <math.h>
 #include <util/delay.h>
 
-#define RAYON_TERRE	 6371000.0
+#define RAYON_TERRE	 637800000.0//cm
 #ifndef I2C_H_
 #define I2C_H_
 #define ANGLE_DECLIN  13.783333

@@ -124,4 +124,8 @@ uint8_t calibration();
 void setSmoothing(uint8_t steps, uint8_t adv);
 void _smoothing();
 
+//test
+float distance_entre_point_long(long lat1,long lon1,long lat2,long lon2);
+float course_long(long lat1, long lon1, long lat2, long lon2);
+
 #endif /* I2C_H_ */

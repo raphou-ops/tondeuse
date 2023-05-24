@@ -43,7 +43,7 @@ int _vScan = 0;
 long _vTotals[3] = {0,0,0};
 int _vSmooth[3] = {0,0,0};
 //calibration
-#define NB_SAMPLE 10000
+#define NB_SAMPLE 20000
 int _vCalibration[3][2];
 int calibrationData[3][2]={{32767,-32768},{32767,-32768},{32767,-32768}};
 int _vCalibrated[3];
@@ -225,24 +225,28 @@ float distance_entre_point(float lat1,float lon1,float lat2,float lon2)
 	
 	return distance;
 }
+
 float toDegrees(float radians)
 {
-	return radians * 180.0 / M_PI;
+	return (radians * 180.0) / M_PI;
 }
+
 
 float course(float lat1, float lon1, float lat2, float lon2)
 {
 	float phi1 = deg_toRad(lat1);
 	float phi2 = deg_toRad(lat2);
-	float delta_lambda = deg_toRad(lon2 - lon1);
+	float delta_lambda = (lon2 - lon1)*(M_PI/180.0);
 
 	float y = sin(delta_lambda) * cos(phi2);
-	float x = cos(phi1) * sin(phi2) - sin(phi1) * cos(phi2) * cos(delta_lambda);
+	float x = (cos(phi1) * sin(phi2)) - (sin(phi1) * cos(phi2) * cos(delta_lambda));
 
 	float theta = atan2(y, x);
 
 	return toDegrees(fmod(theta + 2 * M_PI, 2 * M_PI));
 }
+
+
 
 void _applyCalibration()
 {
@@ -301,7 +305,6 @@ uint8_t calibration()
 	}
 	cntSample=0;
 	setCalibration(calibrationData[0][0],calibrationData[0][1],calibrationData[1][0],calibrationData[1][1],calibrationData[2][0],calibrationData[2][1]);
-	
 	
 	return 1;
 }
@@ -447,4 +450,28 @@ ISR(TWI_vect)
 		break;
 	}
 	
+}
+//test
+float distance_entre_point_long(long lat1,long lon1,long lat2,long lon2)
+{
+	float dlat = deg_toRad((float)(lat2 - lat1));
+	float dlon = deg_toRad((float)(lon2 - lon1));
+	float a = sin(dlat/2) * sin(dlat/2) + cos(deg_toRad(lat1)) * cos(deg_toRad(lat2)) * sin(dlon/2) * sin(dlon/2);
+	float c = 2 * atan2(sqrt(a), sqrt(1 - a));
+	float distance = RAYON_TERRE * c;
+	
+	return distance;
+}
+float course_long(long lat1, long lon1, long lat2, long lon2)
+{
+	float phi1 = deg_toRad(lat1);
+	float phi2 = deg_toRad(lat2);
+	float delta_lambda = deg_toRad(lon2 - lon1);
+
+	float y = sin(delta_lambda) * cos(phi2);
+	float x = cos(phi1) * sin(phi2) - sin(phi1) * cos(phi2) * cos(delta_lambda);
+
+	float theta = atan2(y, x);
+
+	return toDegrees(fmod(theta + 2 * M_PI, 2 * M_PI));
 }

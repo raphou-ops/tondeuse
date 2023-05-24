@@ -11,6 +11,9 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+
+
 
 #include "USART0.h"
 #include "USART1.h"
@@ -51,12 +54,12 @@ uint8_t dataBluetooth = 0;
 //long tabLatMem[80];
 //long tabLonMem[80];
 
-uint16_t nbPointGpsDispo=3;//0
-enum EtapeModeAuto{ORIENTER,TOURNER,AJUSTER,TEST};
+uint16_t nbPointGpsDispo=3;//mettre 0  pour les donn/es js
+enum EtapeModeAuto{ORIENTER,TOURNER,AJUSTER};
 enum EtapeModeAuto etapeModeAuto=ORIENTER;
 uint16_t indexDestination=0; //0 si jamais le traitement bogue
-float tabLatMem[3]={45.644507,45.644553,45.644467};
-float tabLonMem[3]={-73.842252,-73.842383,-73.842328};
+float tabLatMem[2]={45.64461,45.64454};
+float tabLonMem[2]={-73.84276,-73.84287};
 
 float tabLatMemJs[100];
 float tabLonMemJs[100];
@@ -129,12 +132,12 @@ enum gestionModes modeActuel = MANUEL;
 volatile float niveauBatterie=0;
 
 /*Variables pour pid*/
-#define KP 5
+#define KP 125
 #define KI 0.1
-#define KD 1
+#define KD 3
 
 //#define SOMME_MAX 10
-#define TAILLE_FENETRE 10
+#define TAILLE_FENETRE 8
 //int sommeErreur[SOMME_MAX];
 int window[TAILLE_FENETRE];
 int erreur=0;//déjà calculé, proportionnel
@@ -166,10 +169,12 @@ float distanceMoyParcouru=0;
 char msgEnvoi[50];
 uint8_t flagPluie = 0;
 uint8_t flagLidar = 0;
-uint16_t distanceObjet = 0;
+uint16_t distanceObjet = 20;
 uint8_t etatCoupe = 0;
 uint8_t flagCalibration = 0;
 uint8_t toucheManette = 0;
+uint8_t flagEnvoi = 0;
+
 
 float PDOP = 0;
 /*Declaration des fonctions*/
@@ -190,8 +195,11 @@ void initBoussole();
 
 int main(void)
 {
+	indexDestination=0;
 	lcdInit();
+	
 	initBoussole();
+	_delay_ms(100);
 	setSmoothing(10,1);
 	
 	PORTA|=0x0F;//initclavier
@@ -211,6 +219,8 @@ int main(void)
 	TIMSK0 |= (1<<OCIE0A);//Output Compare Match A Interrupt Enable.
 	OCR0A = 249;//Top a la valeur 249 afin de obtenir un periode de 1ms fixe.
 	
+	sei();
+	
 	PORTJ |= 0b00011000;//active pull-up sur PB4 et PB5
 	PCICR |= 0b00000010;//active la lecture sur PCINT4 et PCINT5
 	PCMSK1 |= 0b00110000;//active les interruption sur PCINT4 et PCINT5
@@ -220,7 +230,6 @@ int main(void)
 	usart2Init(115200,16000000);
 	
 	
-	//usartGpsSendBytes(setRate,14);
 	
 	do{
 		if(refreshClavier)
@@ -259,11 +268,16 @@ int main(void)
 	envoieConfigRate(1);
 	envoieConfigMsg(PVT,USART1_ON,USB_ON);
 	passwordValid = 0;
+	cntPassword = 0;
 	lcdClearScreen();
 	lcdSetPos(0,0);
 	lcdPuts("Mode Manuel  <-");
-	effectuerCalibration();
-	_delay_ms(100);
+	
+	static uint8_t executed = 1;
+	if (executed) {
+		effectuerCalibration();
+		executed = 0; // Set the flag to indicate execution
+	}
 	
 	while (1)
 	{
@@ -352,6 +366,7 @@ int main(void)
 					passwordValid = 0;
 					lcdSetPos(13,0);
 					lcdPuts("<-");
+					flagEnvoi = 1;
 				}
 			}
 			lastKey = key;
@@ -404,6 +419,19 @@ int main(void)
 					nbPointGpsDispo++;
 				}
 			}
+			else
+			{
+				//cntLonMemoireJs = 0;
+				//cntLatMemoireJs = 0;
+				if(refreshEnvoi)
+				{
+					float latEnvoi = getNavPvtLat();
+					float longEnvoi = getNavPvtLon();
+					sprintf(msgEnvoi,"S;%.2f;%d;%d;%d;%f;%f;%d;",niveauBatterie,flagPluie,etatCoupe,flagLidar,latEnvoi,longEnvoi,modeTondeuse);
+					usart2SendString(msgEnvoi);
+					refreshEnvoi = 0;
+				}
+			}
 			break;
 			
 			case AUTO:
@@ -432,35 +460,22 @@ int main(void)
 			}
 			
 			if(etapeModeAuto!=ORIENTER)
-			dataGps = usartGpsRemRxData();
-			
-			if(refreshAuto)
 			{
-				refreshAuto = 0;
-				i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
-				angleActuel=getAzimuth();
+				usartGpsRemRxData();
 			}
-			lcdSetPos(0,0);
-			sprintf(msgTime, "%d",getNavPvtVacc());
-			lcdPuts(msgTime);
+			
+			
+			//lcdSetPos(0,0);
+			//sprintf(msgTime, "%f %f ",angleDest, distanceDest);
+			//lcdPuts(msgTime);
 			lcdSetPos(0,1);
-			sprintf(msgTime,"%d",getNavPvtHacc());
+			sprintf(msgTime,"%f %d %f",distanceMoyParcouru,indexDestination,angleActuel);
 			//sprintf(msgTime,"%f",angleActuel);
 			lcdPuts(msgTime);
 			
 			
-			/*refreshAuto = 0;
-			lcdSetPos(0,0);
-			sprintf(msgTime,"%f",getNavPvtLat());
-			lcdPuts(msgTime);
-			lcdSetPos(0,1);
-			sprintf(msgTime,"%f",getNavPvtLon());
-			lcdPuts(msgTime);*/
-			
-			
-			
 			//getNavPvtTime(msgTime);
-			if(nbPointGpsDispo>0)
+			if(nbPointGpsDispo>1)
 			{
 				switch(etapeModeAuto)
 				{
@@ -472,10 +487,11 @@ int main(void)
 						{
 							lat=getNavPvtLat();
 							lon=getNavPvtLon();
+							//lat=45.64462;
+							//lon=-73.84251;
 							horizontalAcc=getNavPvtVacc();//en mm
-							verticalAcc=getNavPvtHacc();//en mm
-							//PDOP = getNavPvtPdop();
-							if(horizontalAcc<=40 && verticalAcc<=40)//check precision 2d,horizon, et 3d,vertical,
+							//verticalAcc=getNavPvtHacc();//en mm
+							if(horizontalAcc<=50)//check precision 2d,horizontal
 							{
 								//indexIndentation pour test tabLatMem[indexDestination]
 								switch (orientation)
@@ -487,12 +503,14 @@ int main(void)
 									
 									case ANGLE:
 									angleDest=course(lat, lon,tabLatMemJs[indexDestination],tabLonMemJs[indexDestination]);//index=1 depart
+									//angleDest=course(39.09991, -94.58121,38.62709,-90.20020);//index=1 depart
 									orientation=FINI;
 									break;
 									
 									case FINI:
 									etapeModeAuto=TOURNER;
 									orientation=DISTANCE;
+									_delay_ms(100);
 									break;
 								}
 							}
@@ -501,83 +519,56 @@ int main(void)
 					break;
 					
 					case TOURNER:
+					i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
+					angleActuel=getAzimuth();
+					_delay_ms(10);
 					if(tourner(angleDest,angleActuel))
 					{
 						encodeurDCnt=0;
 						encodeurGCnt=0;
 						etapeModeAuto=AJUSTER;
 					}
-					
-
 					break;
 					case AJUSTER:
+					i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
+					angleActuel=getAzimuth();
+					
+					_delay_ms(10);
+					
 					ajusterDrirection(angleDest,angleActuel);
-					distanceMoyParcouru= ((encodeurDCnt+encodeurGCnt)/2)*3.45;
+					//_delay_ms(10);
+					
 					if(distanceMoyParcouru>=distanceDest)
 					{
-						//etapeModeAuto=TEST;
 						etapeModeAuto=ORIENTER;
+						//orientation=DISTANCE;
 						indexDestination++;
 						nbPointGpsDispo--;
 					}
+					else
+					{
+						distanceMoyParcouru = (((float)(encodeurDCnt+encodeurGCnt))/2.0);
+						distanceMoyParcouru = distanceMoyParcouru * 3.55;
+					}
+					
 					break;
-					/*case TEST:
-					OCR4B=0;
-					OCR5B=0;
-					OCR4C=0;
-					OCR5C=0;
-					break;*/
 				}
 			}
 			else
 			{
+				retourMaison(tabLatMemJs[0],tabLonMemJs[0]);
 				OCR4B=0;
 				OCR5B=0;
 				OCR4C=0;
 				OCR5C=0;
 			}
-			
-			
-
-			
-			
+			//_delay_ms(200);
 			//getNavPvtTime(msgTime);
-			
-			/*
-			void retourMaison()
-			{
 
-			}
-
-			void modeAutomatique()
-			{
-			//setNextWaypoint(); to start point
-			//recule de la base 50cm
-			//tourner();
-			//if(!isArrivedToWaypoint())
-			//ajusterDrirection();
-			//arrivé sur le terrain et commence le parcours
-			if(waypointsAvailable())
-			{
-			setNextWaypoint();
-			tourner()
-			while(!isArrivedToWaypoint())
-			{
-			ajusterDrirection();
-			}
-			}
-			else
-			{
-			retourMaison();
-			//suis le périmètre jusqu'au point go
-			//va à la station de départ;
-			}
-			
-			}
-			*/
 			break;
 			
 			case SET_TIME:
+			_delay_ms(200);
 			lcdSetPos(0,1);
 			sprintf(tempsCoupe,"%d:%d",heureCoupe,minutesCoupe/*,trameGpsNavPvtValide[16]*/);
 			do
@@ -670,6 +661,7 @@ int main(void)
 			break;
 			
 			case SET_NIP:
+			_delay_ms(200);
 			do{
 				if(refreshClavier)
 				{
@@ -681,39 +673,44 @@ int main(void)
 						lcdSetPos(cntPassword,1);
 						essaiUser[cntPassword++] = key;
 						lcdPutc(key);
-					}
-					if(cntPassword == 4)
-					{
-						for(uint8_t index = 0; index<4; index++)
+						if(cntPassword == 4)
 						{
-							password[index] = essaiUser[index];
+							for(uint8_t index = 0; index<4; index++)
+							{
+								password[index] = essaiUser[index];
+							}
+							cntMenu = 4;
+							modeActuel = DEFAULT;
+							modeTondeuse = 5;
+							passwordValid = 1;
+							cntPassword = 0;
+							lcdClearScreen();
+							lcdSetPos(0,0);
+							lcdPuts("Set password OK");
+							lcdSetPos(0,1);
+							lcdPuts(msgTime);
 						}
-						cntMenu = 4;
-						modeActuel = DEFAULT;
-						modeTondeuse = 5;
-						passwordValid = 1;
-						cntPassword = 0;
-						lcdClearScreen();
-						lcdSetPos(0,0);
-						lcdPuts("Set password OK");
-						lcdSetPos(0,1);
-						lcdPuts(msgTime);
 					}
 					lastKey = key;
 				}
 			}while(!passwordValid);
 			break;
+			
 			case DEFAULT:
 			//case pour la sortie de menus mot de passe et set time
 			break;
 		}
-		if((refreshEnvoi)&&(modeTondeuse!=1))
+		
+		if(modeTondeuse!=1)
 		{
-			refreshEnvoi = 0;
-			float latEnvoi = getNavPvtLat();
-			float longEnvoi = getNavPvtLon();
-			sprintf(msgEnvoi,"S;%.2f;%d;%d;%d;%f;%f;%d;",niveauBatterie,flagPluie,etatCoupe,flagLidar,latEnvoi,longEnvoi,modeTondeuse);
-			usart2SendString(msgEnvoi);
+			if(refreshEnvoi)
+			{
+				float latEnvoi = lat;
+				float longEnvoi = lon;
+				sprintf(msgEnvoi,"S;%.2f;%d;%d;%d;%f;%f;%d;",niveauBatterie,flagPluie,etatCoupe,flagLidar,latEnvoi,longEnvoi,modeTondeuse);
+				usart2SendString(msgEnvoi);
+				refreshEnvoi = 0;
+			}
 		}
 	}
 	
@@ -963,13 +960,18 @@ void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=a
 	}
 	window[0] = deltaDerive;
 	//ki
-	for (int i = 0; i < TAILLE_FENETRE; i++) {
-		valSommeErreur = window[i];//+=
+	valSommeErreur = 0;
+	if(deltaDerive>=-15 &&deltaDerive<=15)
+	{
+		for (int i = 0; i < TAILLE_FENETRE; i++) {
+			valSommeErreur += window[i];
+		}
 	}
-	//kd
-	//variation = window[0] - window[TAILLE_FENETRE-1];
 
-	valPid=KP*deltaDerive/*+KI*valSommeErreur+KD*variation*/;
+	//kd
+	variation = window[0] - window[TAILLE_FENETRE-1];
+
+	valPid=KP*deltaDerive+KI*valSommeErreur+KD*variation;
 	//vérification
 	if(valPid>412)
 	valPid=412;
@@ -1027,15 +1029,15 @@ uint8_t tourner(uint16_t angleDest, uint16_t angleActuel)
 		}
 		else
 		{
-			OCR4B=(VIT_MIN+369);//on vitesse à déterminer VIT_MIN+vitesseMoteurD;
-			OCR5B=(VIT_MIN+300);//on 69 diff
+			OCR4B=(VIT_MIN+512);//on vitesse à déterminer VIT_MIN+vitesseMoteurD;
+			OCR5B=(VIT_MIN+450);//on 69 diff
 			OCR4C=0;
 			OCR5C=0;
 		}
 	}
 	else
 	{
-		if(deltaDerive>-5 && deltaDerive<5)//tourner vers droite
+		if(deltaDerive>-2 && deltaDerive<2)//tourner vers droite
 		{
 			return 1;
 		}
@@ -1043,8 +1045,8 @@ uint8_t tourner(uint16_t angleDest, uint16_t angleActuel)
 		{
 			OCR4B=0;
 			OCR5B=0;
-			OCR4C=(VIT_MIN+369);//moteurs inégal 512
-			OCR5C=(VIT_MIN+300);//443
+			OCR4C=(VIT_MIN+512);//moteurs inégal 512
+			OCR5C=(VIT_MIN+450);//443
 
 		}
 	}
@@ -1069,4 +1071,66 @@ void initBoussole()
 	i2cInit();
 	i2cWriteByte(QMC5883_ADDRESS_MAG,0x0B,0x01);
 	setMode(0x01,0x0C,0x10,0X00);
+}
+void retourMaison(float latitudeMaison,float longitudeMaison)
+{
+	switch(etapeModeAuto)
+	{
+		case ORIENTER:
+		dataGps = usartGpsRemRxData();
+		if(parseRxUbxNavPvt(dataGps))
+		{
+			if(getNavPvtFixType()>=3)//3d fix
+			{
+				lat=getNavPvtLat();
+				lon=getNavPvtLon();
+				horizontalAcc=getNavPvtVacc();//en mm
+				verticalAcc=getNavPvtHacc();//en mm
+				if(horizontalAcc<=40 && verticalAcc<=40)//check precision 2d,horizon, et 3d,vertical,
+				{
+					//pour test tabLatMem[indexDestination]
+					switch (orientation)
+					{
+						case DISTANCE:
+						distanceDest=distance_entre_point(lat,lon,latitudeMaison,longitudeMaison);//lat actuel, lon actuel, lat dest,lon dest
+						orientation=ANGLE;
+						break;
+
+						case ANGLE:
+						angleDest=course(lat, lon,latitudeMaison,longitudeMaison);//index=1 depart
+						orientation=FINI;
+						break;
+
+						case FINI:
+						etapeModeAuto=TOURNER;
+						orientation=DISTANCE;
+						break;
+					}
+				}
+			}
+			break;
+			case TOURNER:
+			if(tourner(angleDest,angleActuel))
+			{
+				encodeurDCnt=0;
+				encodeurGCnt=0;
+				etapeModeAuto=AJUSTER;
+			}
+
+
+			break;
+			case AJUSTER:
+			ajusterDrirection(angleDest,angleActuel);
+			distanceMoyParcouru= ((encodeurDCnt+encodeurGCnt)/2)*3.45;
+			if(distanceMoyParcouru>=distanceDest)
+			{
+				//remettre alerte pluie ou batterie à 0
+				OCR4B=0;
+				OCR5B=0;
+				OCR4C=0;
+				OCR5C=0;
+			}
+			break;
+		}
+	}
 }

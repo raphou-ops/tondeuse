@@ -10,6 +10,10 @@ var demandeLogout = false;
 
 var etatEnvoiBluetooth = true;
 
+var value = 0;
+
+var modeTondeuse = 0;
+
 var client = mqtt.connect('mqtt://127.0.0.1:1883');
 
 var connection = mysql.createConnection({
@@ -44,8 +48,9 @@ io.sockets.on('connection', function (socket) {
     console.log("Un utilisateur c'est déconnecté !");
   });
   socket.on('Bluetooth', function (joystickGaucheX, joystickGaucheY, boutonX, boutonO, boutonTriangle) {
-    var msg = "<" + joystickGaucheX.toFixed(0).toString() + ";" + joystickGaucheY.toFixed(0).toString() + ";" + boutonX + ";" + boutonO + ";" + boutonTriangle + ">";
-    //port.write(msg); decommenter cette ligne pour la communication avec la manette. (ne pas paniquer)
+    var msg = "<" + joystickGaucheX.toFixed(0).toString() + ";" + joystickGaucheY.toFixed(0).toString() + ";" + boutonX + ";" + boutonO + ";" + boutonTriangle + ">";//changer le protocol
+    if (modeTondeuse == 0)
+      port.write(msg); //decommenter cette ligne pour la communication avec la manette. (ne pas paniquer)
     io.sockets.emit('refreshCommande', msg);
   });
   socket.on('cancelBluetoothProg', function () {
@@ -61,16 +66,24 @@ io.sockets.on('connection', function (socket) {
         if (ackTondeuse == true) {
           i++;
           ackTondeuse = false;
+          io.sockets.emit('refreshData',i,longueur);
         }
         var str = "<" + msg[i] + ">";
-        port.write(str);
-        console.log(str);
+        if (modeTondeuse == 1) {
+          port.write(str);
+          console.log(str);
+        }
+        else {
+          io.sockets.emit('erreurEnvoi');
+          etatEnvoiBluetooth = false;
+        }
 
         if (i < longueur - 1) {
-          setTimeout(f, 100);
+          setTimeout(f, 200);
         }
         else {
           io.sockets.emit('finishedSendingData');
+          etatReception = 1;
         }
       }
     }
@@ -108,7 +121,7 @@ io.sockets.on('connection', function (socket) {
   });
 });
 
-var etat = 1;
+var etatReception = 1;
 var tabData = [];
 
 const { SerialPort, ReadlineParser } = require('serialport');
@@ -125,7 +138,10 @@ const port = new SerialPort({
 });
 
 port.on('error', function (err) {
-  console.log('Error: ', err.message)
+  modeTondeuse = 0;
+  console.log('Error: ', err.message);
+  reponse = false;
+  io.sockets.emit('enableBouton', reponse);
 });
 
 port.on('open', function () {
@@ -133,35 +149,46 @@ port.on('open', function () {
 });
 
 port.on('close', function () {
+  modeTondeuse = 0;
   console.log("COM 17 fermé");
 });
 
 port.pipe(parser);
 parser.on('data', function (data) {
 
-  var value = data;
+  value = data;
 
-  switch (etat) {
+  switch (etatReception) {
     case 1:
       if (value == "S") {
         index = 0;
-        etat = 2;
+        etatReception = 2;
+        tabData = [];
+      }
+      else if (value == "C") {
+        index = 0;
+        etatReception = 3;
         tabData = [];
       }
       else {
-        etat = 1
+        etatReception = 1
       }
       break;
 
     case 2:
-      // index++;
-      // if (index < 2) {
-      //   tabData.push(value);
-      // }
-      // else {
-      //   console.log('Data:', tabData);
-      //   etat = 1;
-      // }
+      index++;
+      if ((index <= 7) && (value != "S")) {
+        tabData.push(value);
+      }
+      else {
+        console.log('Data:', tabData);
+        io.sockets.emit('receptionBluetooth', tabData);
+        modeTondeuse = tabData[6];
+        etatReception = 1;
+      }
+
+      break;
+    case 3:
       if (value == "ack") {
         ackTondeuse = true;
         console.log(ackTondeuse);

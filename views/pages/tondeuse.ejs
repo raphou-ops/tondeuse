@@ -541,9 +541,9 @@
             var lng = waypointMVCArray.getAt(x).lng();
             if (x == 0) {
                 //Add first line twice (i.e. to set first point as home)
-                missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6)) * 1000000, (lng.toFixed(6)) * 1000000) + "\n";
+                missionString += buildWaypointFileLatLngLine("C", ((lat * 1e6).toFixed(0)), ((lng * 1e6).toFixed(0))) + "\n";
             }
-            missionString += buildWaypointFileLatLngLine("C", (lat.toFixed(6)) * 1000000, (lng.toFixed(6)) * 1000000) + "\n";
+            missionString += buildWaypointFileLatLngLine("C", ((lat * 1e6).toFixed(0)), ((lng * 1e6).toFixed(0))) + "\n";
         }
         return missionString;
     }
@@ -989,7 +989,7 @@
                                 <p class="text-primary">Batterie</p>
                                 <span class="material-icons-outlined text-blue">battery_charging_full</span>
                             </div>
-                            <span class="text-primary font-weight-bold">79%</span>
+                            <span id="textBatterie" class="text-primary font-weight-bold">79%</span>
                         </div>
 
                         <div class="card">
@@ -997,7 +997,7 @@
                                 <p class="text-primary">Mode Tondeuse</p>
                                 <span class="material-icons-outlined text-orange">precision_manufacturing</span>
                             </div>
-                            <span class="text-primary font-weight-bold">Manuel</span>
+                            <span id="texteMode" class="text-primary font-weight-bold">Manuel</span>
                         </div>
 
                         <div class="card">
@@ -1005,7 +1005,7 @@
                                 <p class="text-primary">Progression Coupe</p>
                                 <span class="material-icons-outlined text-green">grass</span>
                             </div>
-                            <span class="text-primary font-weight-bold">Processing</span>
+                            <span id="texteProgression" class="text-primary font-weight-bold">Processing</span>
                         </div>
 
                         <div class="card">
@@ -1013,7 +1013,9 @@
                                 <p class="text-primary">Localisation/Méteo</p>
                                 <span class="material-icons-outlined text-red">notification_important</span>
                             </div>
-                            <span class="text-primary font-weight-bold">73.245678/-45.324526/pluie</span>
+                            <span id="texteLon" class="text-primary font-weight-bold">Lon: -73.245678</span>
+                            <span id="texteLat" class="text-primary font-weight-bold">Lat:  45.674556</span>
+                            <span id="textePluie" class="text-primary font-weight-bold">Climat: pluie</span>
                         </div>
 
                     </div>
@@ -1090,7 +1092,8 @@
                         </div>
                         <button id="submitButton">Envoyer</button>
                         <button id="cancelButton" onclick="cancelEnvoiBtProg()">Arrêter</button>
-                        <pre id="out"><p></p></pre>
+                        <pre id="out"><b></b></pre>
+                        <pre id="statusData"><b></b></pre>
                     </div>
                     </br>
                 </div>
@@ -1103,7 +1106,7 @@
                 <!-- Global site tag (gtag.js) - Google Analytics -->
                 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-96994646-1"></script>
                 <!-- <script src="./js/analytics.js"></script> -->
-                </br></br></br></br></br>
+                </br></br></br></br></br></br></br>
             </div>
         </section>
 
@@ -1437,6 +1440,7 @@
         var boutonO = 0;
         var boutonTriangle = 0;
         let controllerIndex = null;
+        var etatPrecedantLiDAR = 0;
 
         //Lignes d'initialisation du gps map
 
@@ -1523,6 +1527,79 @@
 
         socket.on('finishedSendingData', function () {
             document.getElementById('out').innerHTML = "Processus terminé !";
+            document.getElementById("submitButton").disabled = false;
+        });
+
+        socket.on('receptionBluetooth', function (tabData) {
+            document.getElementById("textBatterie").innerHTML = tabData[0] + "%";
+
+            if (tabData[6] == 0) {
+                document.getElementById("texteMode").innerHTML = "Manuel";
+            }
+            else if (tabData[6] == 1) {
+                document.getElementById("texteMode").innerHTML = "Prog";
+            }
+            else if (tabData[6] == 2) {
+                document.getElementById("texteMode").innerHTML = "Auto";
+            }
+            else if (tabData[6] == 3) {
+                document.getElementById("texteMode").innerHTML = "Set Time";
+            }
+            else if (tabData[6] == 5) {
+                document.getElementById("texteMode").innerHTML = "Set Nip";
+            }
+
+            if (tabData[2] == 1) {
+                document.getElementById("texteProgression").innerHTML = "Progression";
+            }
+            else if (tabData[2] == 2) {
+                document.getElementById("texteProgression").innerHTML = "Docking";
+            }
+            else if(tabData[2] == 3) {
+                document.getElementById("texteProgression").innerHTML = "Completé";
+            }
+
+            if((tabData[3] == 1)&&(!etatPrecedantLiDAR))
+            {
+                etatPrecedantLiDAR = 1;
+                alert("Votre tondeuse a détecté un obstacle veuillez l'enlever de son chemin !");
+            }
+            else
+            {
+                etatPrecedantLiDAR = 0;
+            }
+
+            if(tabData[1] == 1)
+            {
+                //detecte la pluie
+                document.getElementById("textePluie").innerHTML = "Climat: pluie";
+            }
+            else
+            {
+                //ne detecte pas de pluie
+                document.getElementById("textePluie").innerHTML = "Climat: aride";
+            }
+
+            if(tabData[4] != 0)
+            {
+                //detecte la pluie
+                document.getElementById("texteLat").innerHTML = "Lat: " + tabData[4];
+            }
+
+            if(tabData[5] != 0)
+            {
+                //detecte la pluie
+                document.getElementById("texteLon").innerHTML = "Long: " + tabData[5];
+            }
+        });
+
+        socket.on('erreurEnvoi', function () {
+            document.getElementById("submitButton").disabled = false;
+            document.getElementById('out').innerHTML = "Erreur lors de l'envoi !";
+            alert("Veuillez vous connecter au Bluetooth RobotTondeuse et mettre l'appareil en mode prog !");
+        });
+        socket.on('refreshData', function (indexData,lengthData) {
+            document.getElementById('statusData').innerHTML = indexData + " / " + (lengthData-1) + " coordinates";
         });
 
         /*Fonction pour recuperer les coordonnes dans le fichier*/
@@ -1536,7 +1613,7 @@
                     var longueur = reader.result.split("\n").length;
                     var row = reader.result.split("\n");
                     console.log(row);
-
+                    document.getElementById("submitButton").disabled = true;
                     socket.emit('progBluetooth', row, longueur, true);
                 };
                 // start reading the file. When it is done, calls the onload event defined above.
@@ -1549,6 +1626,7 @@
         function cancelEnvoiBtProg() {
             socket.emit('cancelBluetoothProg');
             document.getElementById('out').innerHTML = "L'envoi a été interrompu !";
+            document.getElementById("submitButton").disabled = false;
             const file = document.querySelector('.file');
             if (file != null)
                 file.value = '';

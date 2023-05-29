@@ -1,3 +1,13 @@
+/**
+* @file accueil.js
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Ce fichier javascript gere l'indentification de l'utilisateur en fonction de la base de données SQL et affiche la page d'accueil si l'utilisateur a rentrer la bonne identification. Il s'agit du script qui redirige l'utilisateur vers le pages du site web.
+* @version 1.1
+* @date 2023-04-25
+*
+* @copyright Copyright (c) 2023
+*/
+
 var express = require('express');
 var router = express.Router();
 var mysql = require('mysql');

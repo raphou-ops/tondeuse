@@ -1,3 +1,13 @@
+<!-- 
+* @file erreurLogin.ejs
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Cette page s'affiche si l'utilisateur n'a pas rentrer les bonnes informations lors du login sur la page.
+* @version 1.1
+* @date 2023-04-02
+*
+* @copyright Copyright (c) 2023
+-->
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -7,14 +17,14 @@
 </head>
 
 <body>
-    <header>
-        <%- include('../partials/header') %>
-    </header>
-
     <div class="jumbotron">
         <h1>Erreur au niveau du login !!</h1>
         </br>
-        <p>L'utilisateur indiquer n'existe pas ou le mot de passe n'est pas bon.</p>
+        <p>L'utilisateur indiqué n'existe pas ou le mot de passe entrée n'est pas bon.</p>
+        <a class="navbar-brand gradient-text" href="/">
+            <span class="glyphicon glyphicon glyphicon-tree-deciduous"></span>
+            <b>Cliquez ici pour retourner au login !</b>
+        </a>
     </div>
 
     <footer>

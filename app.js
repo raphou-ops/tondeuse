@@ -1,3 +1,13 @@
+/**
+* @file app.js
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Ce fichier javascript initialise le serveur express nodeJs et relie les différents fichiers js avec le fichiers ejs correspondants.
+* @version 1.4
+* @date 2023-05-15
+*
+* @copyright Copyright (c) 2023
+*/
+
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');

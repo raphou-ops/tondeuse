@@ -1,3 +1,5 @@
+//Ce fichier n'est pas utlisée finalement pour le serveur local nodeJs
+
 var express = require('express');
 var router = express.Router();
 var mysql = require('mysql');

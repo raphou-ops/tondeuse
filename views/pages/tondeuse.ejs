@@ -1,3 +1,13 @@
+<!-- 
+* @file tondeuse.ejs
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Ce fichier ejs gere le contrôle de la manette ps4 du côté client et l'envoi au serveur. Cette page gere aussi l'affichage des états de la tondeuse dans les cases de texte et le deux graphiques. Finalement, le code pour le tracé du parcours de coupe se trouve aussi dans ce fichier (precisionmule).
+* @version 1.4
+* @date 2023-05-15
+*
+* @copyright Copyright (c) 2023
+-->
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -5,7 +15,8 @@
     <%- include('../partials/head') %>
 </head>
 
-<script>
+<script> 
+    // code JS pris sur le github de precision mule https://github.com/waynebaswell/precision-mule-ui
     "use strict";
     let map;
     let drawingManager;
@@ -957,7 +968,7 @@
             drawBearingLine(evt.latLng.lat(), evt.latLng.lng(), parseFloat(inputValue));
         });
     }
-
+ // fin code JS pris sur le github de precision mule https://github.com/waynebaswell/precision-mule-ui
 </script>
 
 <body>
@@ -968,7 +979,14 @@
                     socket.emit('logoutUserBal', true);
                 }
             </script>
+            </br>
+            <div id="alerteObjetLiDAR" class="alert alert-danger" style="display:none;">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>Danger !</strong> Un objet bloque le chemin de la tondeuse veuillez l'enlever !
+            </div>
     </header>
+
+    
 
     <div class="jumbotron">
         <div class="jumbotron bg-secondary">
@@ -977,73 +995,141 @@
             </h1>
             </br></br></br>
             <div class="grid-container">
-                <button id="btConnection" onclick="connectionBluetooth()">Se connecter au Nomad</button>
-                <b id="textConnection">Non connecté</b>
-                <!-- Main -->
+                <!-- Interface d'affichage inspirée de la vidéo suivante: https://www.youtube.com/watch?v=UALn3klXFBM&ab_channel=Bob%27sProgrammingAcademy -->
+                
                 <main class="main-container">
+                    <% if(etatConnectionBluetooth==1) {%>
+                        <button id="btConnection" style="background-color: #66ff33;" onclick="connectionBluetooth()">Se
+                            déconnecter du Nomad</button>
+                        <b id="textConnection">Connecté</b>
+                        <%}%>
+                            <% if(etatConnectionBluetooth==0) {%>
+                                <button id="btConnection" style="background-color: #ffffff;"
+                                    onclick="connectionBluetooth()">Se connecter au Nomad</button>
+                                <b id="textConnection">Non connecté</b>
+                                <%}%>
+                                    <div class="main-cards">
 
-                    <div class="main-cards">
+                                        <div class="card">
+                                            <div class="card-inner">
+                                                <p class="text-primary">Batterie</p>
+                                                <span
+                                                    class="material-icons-outlined text-blue">battery_charging_full</span>
+                                            </div>
+                                            <span id="textBatterie" class="text-primary font-weight-bold">
+                                                <%= pourcentageBatterie %>%
+                                            </span>
+                                        </div>
 
-                        <div class="card">
-                            <div class="card-inner">
-                                <p class="text-primary">Batterie</p>
-                                <span class="material-icons-outlined text-blue">battery_charging_full</span>
-                            </div>
-                            <span id="textBatterie" class="text-primary font-weight-bold">79%</span>
-                        </div>
+                                        <div class="card">
+                                            <div class="card-inner">
+                                                <p class="text-primary">Mode Tondeuse</p>
+                                                <span
+                                                    class="material-icons-outlined text-orange">precision_manufacturing</span>
+                                            </div>
+                                            <% if(modeTondeuse==0) {%>
+                                                <span id="texteMode" class="text-primary font-weight-bold">Manuel</span>
+                                                <%}%>
+                                                    <% if(modeTondeuse==1) {%>
+                                                        <span id="texteMode"
+                                                            class="text-primary font-weight-bold">Prog</span>
+                                                        <%}%>
+                                                            <% if(modeTondeuse==2) {%>
+                                                                <span id="texteMode"
+                                                                    class="text-primary font-weight-bold">Auto</span>
+                                                                <%}%>
+                                                                    <% if(modeTondeuse==3) {%>
+                                                                        <span id="texteMode"
+                                                                            class="text-primary font-weight-bold">Set
+                                                                            Time</span>
+                                                                        <%}%>
+                                                                            <% if(modeTondeuse==5) {%>
+                                                                                <span id="texteMode"
+                                                                                    class="text-primary font-weight-bold">Set
+                                                                                    Nip</span>
+                                                                                <%}%>
 
-                        <div class="card">
-                            <div class="card-inner">
-                                <p class="text-primary">Mode Tondeuse</p>
-                                <span class="material-icons-outlined text-orange">precision_manufacturing</span>
-                            </div>
-                            <span id="texteMode" class="text-primary font-weight-bold">Manuel</span>
-                        </div>
+                                        </div>
 
-                        <div class="card">
-                            <div class="card-inner">
-                                <p class="text-primary">Progression Coupe</p>
-                                <span class="material-icons-outlined text-green">grass</span>
-                            </div>
-                            <span id="texteProgression" class="text-primary font-weight-bold">Processing</span>
-                        </div>
+                                        <div class="card">
+                                            <div class="card-inner">
+                                                <p class="text-primary">Progression Coupe</p>
+                                                <span class="material-icons-outlined text-green">grass</span>
+                                            </div>
+                                            <% if(etatCoupe==0) {%>
+                                                <span id="texteProgression" class="text-primary font-weight-bold">En
+                                                    attente</span>
+                                                <%}%>
+                                                    <% if(etatCoupe==1) {%>
+                                                        <span id="texteMode"
+                                                            class="text-primary font-weight-bold">Orienter</span>
+                                                        <%}%>
+                                                            <% if(etatCoupe==2) {%>
+                                                                <span id="texteMode"
+                                                                    class="text-primary font-weight-bold">Tourner</span>
+                                                                <%}%>
+                                                                    <% if(etatCoupe==3) {%>
+                                                                        <span id="texteMode"
+                                                                            class="text-primary font-weight-bold">Ajuster</span>
+                                                                        <%}%>
+                                                                            <% if(etatCoupe==4) {%>
+                                                                                <span id="texteMode"
+                                                                                    class="text-primary font-weight-bold">Completé</span>
+                                                                                <%}%>
+                                        </div>
 
-                        <div class="card">
-                            <div class="card-inner">
-                                <p class="text-primary">Localisation/Méteo</p>
-                                <span class="material-icons-outlined text-red">notification_important</span>
-                            </div>
-                            <span id="texteLon" class="text-primary font-weight-bold">Lon: -73.245678</span>
-                            <span id="texteLat" class="text-primary font-weight-bold">Lat:  45.674556</span>
-                            <span id="textePluie" class="text-primary font-weight-bold">Climat: pluie</span>
-                        </div>
+                                        <div class="card">
+                                            <div class="card-inner">
+                                                <p class="text-primary">Localisation/Méteo</p>
+                                                <span
+                                                    class="material-icons-outlined text-red">notification_important</span>
+                                            </div>
+                                            <span id="texteLon" class="text-primary font-weight-bold">Lon: <%=
+                                                    longitudeTondeuse %></span>
+                                            <span id="texteLat" class="text-primary font-weight-bold">Lat: <%=
+                                                    latitudeTondeuse %></span>
+                                            <% if(flagPluie==1) {%>
+                                                <span id="textePluie" class="text-primary font-weight-bold">Climat:
+                                                    pluie</span>
+                                                <%}%>
+                                                    <% if(flagPluie==0) {%>
+                                                        <span id="textePluie"
+                                                            class="text-primary font-weight-bold">Climat: aride</span>
+                                                        <%}%>
 
-                    </div>
+                                        </div>
 
-                    <div class="charts">
-                        <div class="charts-card">
-                            <p class="chart-title">Changement de modes</p>
-                            <div id="bar-chart"></div>
-                        </div>
+                                    </div>
 
-                        <div class="charts-card">
-                            <p class="chart-title">Décharge de la batterie pendant le fonctionnement</p>
-                            <div id="area-chart"></div>
-                        </div>
+                                    <div class="charts">
+                                        <div class="charts-card">
+                                            <p class="chart-title">Changement de modes</p>
+                                            <div id="bar-chart"></div>
+                                        </div>
 
-                    </div>
+                                        <div class="charts-card">
+                                            <p class="chart-title">Décharge de la batterie pendant le fonctionnement</p>
+                                            <div id="area-chart"></div>
+                                        </div>
+
+                                    </div>
+                                    <button id="clearGraphBatterie" onclick="clearChart()">Vider le tableau de
+                                        batterie</button>
+                                    <button id="controlGraphBatterie" onclick="controlChart()">Arrêter le
+                                        raffrachissement du tableau</button>
                 </main>
                 <!-- End Main -->
 
             </div>
         </div>
-
+        
         <section id="gps_section">
             <div class="jumbotron bg-secondary">
                 <h2 class="gradient-text">
                     GPS
                 </h2>
                 </br></br></br></br>
+                <!-- Code prit sur le github de precision mule https://github.com/waynebaswell/precision-mule-ui -->
                 <div id="panel">
                     <div id="controls">
                         <img src="https://best-robot-lawn-mower.com/wp-content/uploads/2022/03/Best-Robot-Lawn-Mower-icon.png"
@@ -1085,6 +1171,7 @@
                             </div>
                         </div>
                         </br>
+                        <!-- Fin du Code prit sur le github de precision mule -->
                         <div>
                             Exporter le trajet du robot (.CSV):
                             </br>
@@ -1119,6 +1206,7 @@
                 </br></br></br>
                 <p id="statutManette" class="indicationText">La manette est déconnecté.</p>
                 <p id="commandeManette" class="indicationText"></p>
+                <!-- Code pour la manette ps4 prit de https://gist.github.com/CodingWith-Adam/66f62365af3214b9fa7c1342c71264de -->
                 <div class="center">
                     <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
                         xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="600px" height="500px"
@@ -1299,6 +1387,7 @@
                         <g></g>
                     </svg>
                 </div>
+                <!-- Fin du code pour la manette ps4 prit de https://gist.github.com/CodingWith-Adam/66f62365af3214b9fa7c1342c71264de -->
         </section>
         <div class="text-center">
             <a href="https://github.com/raphou-ops/tondeuse.git">GitHub
@@ -1331,12 +1420,55 @@
     </script>
 
     <script>
-        // ---------- CHARTS ----------
+        //Variables pour la manette
 
-        // BAR CHART
+        var joystickGaucheX = 0;
+        var joystickGaucheY = 0;
+        var boutonX = 0;
+        var boutonO = 0;
+        var boutonTriangle = 0;
+        let controllerIndex = null;
+        var etatPrecedantLiDAR = 0;
+
+        var cntManuel = 0;
+        var cntProg = 0;
+        var cntAuto = 0;
+        var cntSetTime = 0;
+        var cntSetNip = 0;
+
+        var etatPrecedantMode = 0;
+
+        var chartControl = true;
+
+        //Lignes d'initialisation du gps map
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-96994646-1');
+
+        //Fonctions pour l'interface de la manette 
+
+        window.addEventListener("gamepadconnected", (event) => {
+            const gamepad = event.gamepad;
+            controllerIndex = gamepad.index;
+            //console.log("connected");
+            document.getElementById("statutManette").innerHTML = "La manette est connecté.";
+        });
+
+        window.addEventListener("gamepaddisconnected", (event) => {
+            controllerIndex = null;
+            //console.log("disconnected");
+            document.getElementById("statutManette").innerHTML = "La manette est déconnecté.";
+        });
+
+        // ---------- GRAPHIQUES ----------
+
+        // Exemple prit sur le site de apexCharts
         var barChartOptions = {
             series: [{
-                data: [10, 8, 6, 4, 2]
+                data: [cntManuel, cntProg, cntAuto, cntSetTime, cntSetNip]
             }],
             chart: {
                 type: 'bar',
@@ -1379,15 +1511,11 @@
         var barChart = new ApexCharts(document.querySelector("#bar-chart"), barChartOptions);
         barChart.render();
 
-
         // AREA CHART
         var areaChartOptions = {
             series: [{
                 name: 'Pourcentage de la batterie',
-                data: [31, 40, 28, 51, 42, 109, 100]
-            }, {
-                name: 'Charge de la batterie',
-                data: [11, 32, 45, 32, 34, 52, 41]
+                data: []
             }],
             chart: {
                 height: 350,
@@ -1403,20 +1531,20 @@
             stroke: {
                 curve: 'smooth'
             },
-            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+            labels: [],
             markers: {
                 size: 0
+            },
+            xaxis: {
+                type: 'datetime',
+                labels: {
+                    format: 'HH:mm:ss',
+                },
             },
             yaxis: [
                 {
                     title: {
                         text: 'Pourcentage de la batterie',
-                    },
-                },
-                {
-                    opposite: true,
-                    title: {
-                        text: 'Charge de la batterie',
                     },
                 },
             ],
@@ -1429,41 +1557,41 @@
         var areaChart = new ApexCharts(document.querySelector("#area-chart"), areaChartOptions);
         areaChart.render();
 
-    </script>
+        function updateChart(newData) {
+            var dateActuelle = new Date();
+            var tempsUtc = new Date(dateActuelle.getTime() - dateActuelle.getTimezoneOffset() * 60000);
+            console.log(tempsUtc);
 
-    <script>
-        //Variables pour la manette
+            areaChart.updateOptions({
+                xaxis: {
+                    labels: {
+                        format: 'HH:mm:ss',
+                    },
+                },
+            });
 
-        var joystickGaucheX = 0;
-        var joystickGaucheY = 0;
-        var boutonX = 0;
-        var boutonO = 0;
-        var boutonTriangle = 0;
-        let controllerIndex = null;
-        var etatPrecedantLiDAR = 0;
+            areaChart.appendData([{
+                data: [[tempsUtc, newData]]
+            }]);
+        }
 
-        //Lignes d'initialisation du gps map
-
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'UA-96994646-1');
-
-        //Fonctions pour l'interface de la manette 
-
-        window.addEventListener("gamepadconnected", (event) => {
-            const gamepad = event.gamepad;
-            controllerIndex = gamepad.index;
-            //console.log("connected");
-            document.getElementById("statutManette").innerHTML = "La manette est connecté.";
-        });
-
-        window.addEventListener("gamepaddisconnected", (event) => {
-            controllerIndex = null;
-            //console.log("disconnected");
-            document.getElementById("statutManette").innerHTML = "La manette est déconnecté.";
-        });
+        function controlChart() {
+            if (chartControl) {
+                chartControl = false;
+                document.getElementById('controlGraphBatterie').innerHTML = "Activer le raffrachissement du tableau";
+            }
+            else {
+                chartControl = true;
+                document.getElementById('controlGraphBatterie').innerHTML = "Désactiver le raffrachissement du tableau";
+            }
+        }
+        function clearChart(){
+                // areaChart.destroy();
+                // areaChart = new ApexCharts(document.querySelector("#area-chart"), areaChartOptions);
+                // areaChart.render();
+            areaChart.updateSeries([]);
+            console.log("hey");
+        }
 
         function handleButtons(buttons) {
             for (let i = 0; i < buttons.length; i++) {
@@ -1521,6 +1649,20 @@
             socket.emit('Bluetooth', joystickGaucheX, joystickGaucheY, boutonX, boutonO, boutonTriangle);
         }
 
+        function toggleAlert() {
+        var alertElement = document.getElementById("alerteObjetLiDAR");
+        if (alertElement.style.display == "none") {
+            alertElement.style.display = "block";
+        } 
+        }
+        function disableAlert() {
+        var alertElement = document.getElementById("alerteObjetLiDAR");
+        if (alertElement.style.display == "block") {
+            alertElement.style.display = "none";
+        } 
+        }
+        
+
         socket.on('refreshCommande', function (msg) {
             document.getElementById("commandeManette").innerHTML = msg;
         });
@@ -1533,61 +1675,76 @@
         socket.on('receptionBluetooth', function (tabData) {
             document.getElementById("textBatterie").innerHTML = tabData[0] + "%";
 
-            if (tabData[6] == 0) {
-                document.getElementById("texteMode").innerHTML = "Manuel";
-            }
-            else if (tabData[6] == 1) {
-                document.getElementById("texteMode").innerHTML = "Prog";
-            }
-            else if (tabData[6] == 2) {
-                document.getElementById("texteMode").innerHTML = "Auto";
-            }
-            else if (tabData[6] == 3) {
-                document.getElementById("texteMode").innerHTML = "Set Time";
-            }
-            else if (tabData[6] == 5) {
-                document.getElementById("texteMode").innerHTML = "Set Nip";
+            if (chartControl) {
+                updateChart(tabData[0]);
             }
 
-            if (tabData[2] == 1) {
-                document.getElementById("texteProgression").innerHTML = "Progression";
+            if ((tabData[6] == 0) && (etatPrecedantMode != 0)) {
+                document.getElementById("texteMode").innerHTML = "Manuel";
+                cntManuel++;
+            }
+            else if ((tabData[6] == 1) && (etatPrecedantMode != 1)) {
+                document.getElementById("texteMode").innerHTML = "Prog";
+                cntProg++;
+            }
+            else if ((tabData[6] == 2) && (etatPrecedantMode != 2)) {
+                document.getElementById("texteMode").innerHTML = "Auto";
+                cntAuto++;
+            }
+            else if ((tabData[6] == 3) && (etatPrecedantMode != 3)) {
+                document.getElementById("texteMode").innerHTML = "Set Time";
+                cntSetTime++;
+            }
+            else if ((tabData[6] == 5) && (etatPrecedantMode != 5)) {
+                document.getElementById("texteMode").innerHTML = "Set Nip";
+                cntSetNip++;
+            }
+            etatPrecedantMode = tabData[6];
+
+            barChart.updateSeries([{
+                data: [cntManuel, cntProg, cntAuto, cntSetTime, cntSetNip]
+            }])
+
+            if (tabData[2] == 0) {
+                document.getElementById("texteProgression").innerHTML = "En attente";
+            }
+            else if (tabData[2] == 1) {
+                document.getElementById("texteProgression").innerHTML = "Orienter";
             }
             else if (tabData[2] == 2) {
-                document.getElementById("texteProgression").innerHTML = "Docking";
+                document.getElementById("texteProgression").innerHTML = "Tourner";
             }
-            else if(tabData[2] == 3) {
+            else if (tabData[2] == 3) {
+                document.getElementById("texteProgression").innerHTML = "Ajuster";
+            }
+            else if (tabData[2] == 4) {
                 document.getElementById("texteProgression").innerHTML = "Completé";
             }
 
-            if((tabData[3] == 1)&&(!etatPrecedantLiDAR))
-            {
+            if ((tabData[3] == 1) && (!etatPrecedantLiDAR)) {
                 etatPrecedantLiDAR = 1;
-                alert("Votre tondeuse a détecté un obstacle veuillez l'enlever de son chemin !");
+                toggleAlert();
             }
-            else
-            {
+            if((tabData[3] == 0) && (etatPrecedantLiDAR == 1)) {
                 etatPrecedantLiDAR = 0;
+                disableAlert();
             }
 
-            if(tabData[1] == 1)
-            {
+            if (tabData[1] == 1) {
                 //detecte la pluie
                 document.getElementById("textePluie").innerHTML = "Climat: pluie";
             }
-            else
-            {
+            else {
                 //ne detecte pas de pluie
                 document.getElementById("textePluie").innerHTML = "Climat: aride";
             }
 
-            if(tabData[4] != 0)
-            {
+            if (tabData[4] != 0) {
                 //detecte la pluie
                 document.getElementById("texteLat").innerHTML = "Lat: " + tabData[4];
             }
 
-            if(tabData[5] != 0)
-            {
+            if (tabData[5] != 0) {
                 //detecte la pluie
                 document.getElementById("texteLon").innerHTML = "Long: " + tabData[5];
             }
@@ -1598,8 +1755,8 @@
             document.getElementById('out').innerHTML = "Erreur lors de l'envoi !";
             alert("Veuillez vous connecter au Bluetooth RobotTondeuse et mettre l'appareil en mode prog !");
         });
-        socket.on('refreshData', function (indexData,lengthData) {
-            document.getElementById('statusData').innerHTML = indexData + " / " + (lengthData-1) + " coordinates";
+        socket.on('refreshData', function (indexData, lengthData) {
+            document.getElementById('statusData').innerHTML = indexData + " / " + (lengthData - 1) + " coordinates";
         });
 
         /*Fonction pour recuperer les coordonnes dans le fichier*/

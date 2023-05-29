@@ -8,6 +8,7 @@
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.15.1",
     "@types/googlemaps": "^3.43.3",
+    "apexcharts": "^3.40.0",
     "bootstrap": "^5.2.3",
     "cookie-parser": "~1.4.4",
     "cookie-session": "^2.0.0",

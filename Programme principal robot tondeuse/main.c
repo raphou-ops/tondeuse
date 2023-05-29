@@ -1,8 +1,11 @@
-/*
-* Programme principal robot tondeuse.c
+/**
+* @file main.c
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Fichier qui possède les différentes fonctions pour le contrôle du robot et l'interface utilisateur par clavier matriciel. Dans ce fichier on appelle toutes les différentes bibliothèques pour contrôler le robot dans tout les modes: Manuel, Prog, Auto, Set Heure de coupe et Set Nip.
+* @version 1.2
+* @date 24 mai 2023
 *
-* Created: 2023-03-31 3:49:12 PM
-* Author : adino
+* @copyright Copyright (c) 2023
 */
 
 #define F_CPU 16000000
@@ -12,8 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
-
 
 #include "USART0.h"
 #include "USART1.h"
@@ -51,10 +52,8 @@ uint8_t setRate[14]={0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0xE8, 0x03, 0x01, 0x00,
 /*Variables globales Bluetooth*/
 
 uint8_t dataBluetooth = 0;
-//long tabLatMem[80];
-//long tabLonMem[80];
 
-uint16_t nbPointGpsDispo=3;//mettre 0  pour les donn/es js
+uint16_t nbPointGpsDispo=3;//mettre 0  pour les données js
 enum EtapeModeAuto{ORIENTER,TOURNER,AJUSTER};
 enum EtapeModeAuto etapeModeAuto=ORIENTER;
 uint16_t indexDestination=0; //0 si jamais le traitement bogue
@@ -63,13 +62,12 @@ float tabLonMem[2]={-73.84276,-73.84287};
 
 float tabLatMemJs[100];
 float tabLonMemJs[100];
-//long tabLonMem[100];
-//long tabLatMem[100];
 
 uint8_t cntLatMemoireJs = 0;
 uint8_t cntLonMemoireJs = 0;
 enum Orientation{DISTANCE,ANGLE,FINI};
 enum Orientation orientation=DISTANCE;
+
 //controle manette ps4 joystickX et joystickY dans section joystick physique
 
 /*Variables globales LiDAR*/
@@ -127,27 +125,26 @@ char tempsCoupe[5];
 enum gestionModes{MANUEL,PROG,AUTO,SET_TIME,SET_NIP,DEFAULT};
 enum gestionModes modeActuel = MANUEL;
 
-/*Etats et pourcentage de la batterie*/
+/*États et pourcentage de la batterie*/
 
-volatile float niveauBatterie=0;
+volatile float niveauBatterie = 0;
 
-/*Variables pour pid*/
-#define KP 125
-#define KI 0.1
-#define KD 3
+/*Variables pour PID*/
 
-//#define SOMME_MAX 10
-#define TAILLE_FENETRE 8
-//int sommeErreur[SOMME_MAX];
+#define KP 28
+#define KI 1
+#define KD 0.1
+
+#define TAILLE_FENETRE 10
 int window[TAILLE_FENETRE];
-int erreur=0;//déjà calculé, proportionnel
-int valSommeErreur=0;// intégrale
-int erreurPrec=0;
-int variation=0;//dérivé
-int valPid=0;
-uint8_t cntSommeErreur=0;
-
-/*Variables timer0 refresh du systeme*/
+int erreur = 0;//déjé calculé, proportionnel
+int valSommeErreur = 0;// intégrale
+int erreurPrec = 0;
+int variation = 0;//dérivé
+int valPid = 0;
+uint8_t cntSommeErreur = 0;
+int derivation=0;
+/*Variables timer0 refresh du système*/
 
 volatile uint8_t cntDixiemeDeSec = 0;
 volatile uint16_t cntDixiemeDeSecLCD = 0;
@@ -157,7 +154,6 @@ volatile uint8_t refreshLCD = 0;
 volatile uint8_t refreshEnvoi = 0;
 volatile uint8_t refreshAuto = 0;
 
-
 /*Variables calcul compas*/
 
 float distanceDest=0;
@@ -166,6 +162,7 @@ float angleActuel=0;
 float distanceMoyParcouru=0;
 
 /*Variables Bluetooth envoi vers la tondeuse*/
+
 char msgEnvoi[50];
 uint8_t flagPluie = 0;
 uint8_t flagLidar = 0;
@@ -174,10 +171,9 @@ uint8_t etatCoupe = 0;
 uint8_t flagCalibration = 0;
 uint8_t toucheManette = 0;
 uint8_t flagEnvoi = 0;
+uint8_t flagRetourMaison=0;
 
-
-float PDOP = 0;
-/*Declaration des fonctions*/
+/*Déclaration des fonctions*/
 
 void adcInit();//initialise l'adc
 void moteurInit();
@@ -190,16 +186,18 @@ void sortieMaison();
 void effectuerCalibration();
 void initBoussole();
 
-
 /*Programme principal*/
+
+/**
+* @brief La fonction main possède l'initialisation du module QMC5883L, l'intialisation de la communication I2C (QMC5883L), USART0 (LiDAR), USART1 (GPS RTK) et USART2 (Bluetooth), l'initialisation du timer0 pour le rafraîchissement, l'envoi des messages de configuration pour le module simpleRTK2B (ZEDF9P), l'initialisation des interruptions externes sur PCINT1 et PCINT2, l'initialisation des registres PWM (OCR1 (lame), OCR4 (moteur gauche), OCR5 (moteur droit) du atmega2560, l'initialisation des trois registres ADC utilisées pour les capteurs, l'activation de la pull-up interne sur le PORTA du atmega2560 pour le clavier matriciel,l'initialisation de l'écran LCD HD44780 et la gestion du mot de passe rentrée par l'utilisateur.
+*/
 
 int main(void)
 {
-	indexDestination=0;
 	lcdInit();
 	
 	initBoussole();
-	_delay_ms(100);
+	_delay_ms(100); //délai pour laisser le temps au compas de bien s'initialiser
 	setSmoothing(10,1);
 	
 	PORTA|=0x0F;//initclavier
@@ -228,8 +226,6 @@ int main(void)
 	usart0Init(115200,16000000);
 	usartGpsInit(9600,16000000);
 	usart2Init(115200,16000000);
-	
-	
 	
 	do{
 		if(refreshClavier)
@@ -273,12 +269,18 @@ int main(void)
 	lcdSetPos(0,0);
 	lcdPuts("Mode Manuel  <-");
 	
+	//Partie a décommenter pour les tests du mode auto (facilite les tests)
+	/*
 	static uint8_t executed = 1;
 	if (executed) {
-		effectuerCalibration();
-		executed = 0; // Set the flag to indicate execution
+	effectuerCalibration();
+	executed = 0;
 	}
+	*/
 	
+	/**
+	* @brief La boucle principale du programme qui gére le différents modes du robot tondeuse: Manuel, Prog, Auto, Set Time et Set Nip. Dans le mode manuel, l'utilisateur peut contrôler le robot à l'aide du joystick physique ou la manette de ps4 par connection bluetooth entre le hc-05 et le serveur nodeJs. Dans le mode prog, l'utilisateur peut envoyer les donnés de longitude latitude génerés sur le serveur local nodeJS au robot tondeuse, ces points correspondent aux différents coordonnées à atteindre pendant son fonctionnement automatique en ordre (son tracé).
+	*/
 	while (1)
 	{
 		if(refreshClavier)
@@ -374,7 +376,32 @@ int main(void)
 		switch(modeActuel)
 		{
 			case MANUEL:
+			etatCoupe=0;
 			controleManuel();
+			if(usart0RxAvailable())
+			{
+				dataLiDAR = usart0RemRxData();
+				if(parseRxLidar(dataLiDAR))
+				{
+					distanceObjet = getDist();
+				}
+			}
+			if(distanceObjet <= 14)
+			{
+				flagLidar = 1;
+				OCR4B=0;
+				OCR5B=0;
+				OCR4C=0;
+				OCR5C=0;
+				joysticX = 0;
+				joysticY = 0;
+			}
+			else
+			{
+				flagLidar = 0;
+				//DDRB|=(1<<6);
+			}
+			
 			if(usart2RxAvailable())
 			{
 				dataBluetooth = usart2RemRxData();
@@ -385,12 +412,12 @@ int main(void)
 			if(getBoutonX() == 0x31)
 			{
 				OCR1B=1024;
-				DDRB|=(1<<6);
+				DDRB|=(1<<6); //activer la lame
 			}
 			else
 			{
 				OCR1B=90;
-				DDRB &= ~(1<<6);
+				DDRB &= ~(1<<6); //désactiver la lame
 			}
 			toucheManette = getBoutonO();
 			if((toucheManette == 0x31)&&(flagCalibration!=0x31))
@@ -398,6 +425,8 @@ int main(void)
 				effectuerCalibration();
 			}
 			flagCalibration = toucheManette;
+			
+			// À décommenter pour l'affichage de l'heure sur le LCD
 			
 			// 			if(refreshLCD)
 			// 			{
@@ -421,8 +450,11 @@ int main(void)
 			}
 			else
 			{
+				// Tests pour le reset des cnt dans la mémoire
+				
 				//cntLonMemoireJs = 0;
 				//cntLatMemoireJs = 0;
+				
 				if(refreshEnvoi)
 				{
 					float latEnvoi = getNavPvtLat();
@@ -435,6 +467,9 @@ int main(void)
 			break;
 			
 			case AUTO:
+			
+			// À décommenter pour l'affichage de l'heure sur le LCD
+			
 			// 			if(refreshLCD)
 			// 			{
 			// 				refreshLCD = 0;
@@ -464,108 +499,113 @@ int main(void)
 				usartGpsRemRxData();
 			}
 			
-			
-			//lcdSetPos(0,0);
-			//sprintf(msgTime, "%f %f ",angleDest, distanceDest);
-			//lcdPuts(msgTime);
 			lcdSetPos(0,1);
 			sprintf(msgTime,"%f %d %f",distanceMoyParcouru,indexDestination,angleActuel);
-			//sprintf(msgTime,"%f",angleActuel);
 			lcdPuts(msgTime);
 			
+			//Ligne à décommenter pour récuperer le temps actuel à partir du module GPS
 			
 			//getNavPvtTime(msgTime);
-			if(nbPointGpsDispo>1)
+			
+			if(flagPluie||(niveauBatterie<50 && niveauBatterie!=0))
 			{
-				switch(etapeModeAuto)
+				flagRetourMaison=1;
+			}
+			if(flagRetourMaison)
+			{
+				retourMaison(tabLatMemJs[0],tabLonMemJs[0]);
+			}
+			
+			if(!flagLidar && !flagRetourMaison)
+			{
+				if(nbPointGpsDispo>1)
 				{
-					case ORIENTER:
-					dataGps = usartGpsRemRxData();
-					if(parseRxUbxNavPvt(dataGps))
+					switch(etapeModeAuto)
 					{
-						if(getNavPvtFixType()>=3)//3d fix
+						case ORIENTER:
+						etatCoupe=1;
+						dataGps = usartGpsRemRxData();
+						if(parseRxUbxNavPvt(dataGps))
 						{
-							lat=getNavPvtLat();
-							lon=getNavPvtLon();
-							//lat=45.64462;
-							//lon=-73.84251;
-							horizontalAcc=getNavPvtVacc();//en mm
-							//verticalAcc=getNavPvtHacc();//en mm
-							if(horizontalAcc<=50)//check precision 2d,horizontal
+							if(getNavPvtFixType()>=3)//3d fix
 							{
-								//indexIndentation pour test tabLatMem[indexDestination]
-								switch (orientation)
+								lat=getNavPvtLat();
+								lon=getNavPvtLon();
+								horizontalAcc=getNavPvtVacc();//en mm
+								if(horizontalAcc<=50)//check precision 2d,horizontal
 								{
-									case DISTANCE:
-									distanceDest=distance_entre_point(lat,lon,tabLatMemJs[indexDestination],tabLonMemJs[indexDestination]);//lat actuel, lon actuel, lat dest,lon dest
-									orientation=ANGLE;
-									break;
-									
-									case ANGLE:
-									angleDest=course(lat, lon,tabLatMemJs[indexDestination],tabLonMemJs[indexDestination]);//index=1 depart
-									//angleDest=course(39.09991, -94.58121,38.62709,-90.20020);//index=1 depart
-									orientation=FINI;
-									break;
-									
-									case FINI:
-									etapeModeAuto=TOURNER;
-									orientation=DISTANCE;
-									_delay_ms(100);
-									break;
+									switch (orientation)
+									{
+										case DISTANCE:
+										cli();
+										distanceDest=distance_entre_point(lat,lon,tabLatMemJs[indexDestination],tabLonMemJs[indexDestination]);//lat actuel, lon actuel, lat dest,lon dest
+										sei();
+										orientation=ANGLE;
+										break;
+										
+										case ANGLE:
+										cli();
+										angleDest=course(lat, lon,tabLatMemJs[indexDestination],tabLonMemJs[indexDestination]);//index=1 depart
+										sei();
+										orientation=FINI;
+										break;
+										
+										case FINI:
+										etapeModeAuto=TOURNER;
+										orientation=DISTANCE;
+										_delay_ms(100);
+										break;
+									}
 								}
 							}
 						}
+						break;
+						
+						case TOURNER:
+						etatCoupe=2;
+						i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
+						angleActuel=getAzimuth();//récuperer le bearing
+						
+						_delay_ms(10); //délai essentiel pour permettre au atmega2560 de recevoir les données du compas digitale
+						
+						if(tourner(angleDest,angleActuel))
+						{
+							encodeurDCnt=0;
+							encodeurGCnt=0;
+							etapeModeAuto=AJUSTER;
+						}
+						break;
+						case AJUSTER:
+						etatCoupe=3;
+						i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
+						angleActuel=getAzimuth();
+						
+						_delay_ms(10); //délai essentiel pour permettre au atmega2560 de recevoir les données du compas digitale
+						
+						ajusterDrirection(angleDest,angleActuel);
+						
+						if(distanceMoyParcouru>=distanceDest)
+						{
+							etapeModeAuto=ORIENTER;
+							indexDestination++;
+							nbPointGpsDispo--;
+						}
+						else if(derivation>=-5 && derivation<=5)
+						{
+							distanceMoyParcouru = (((float)(encodeurDCnt+encodeurGCnt))/2.0);
+							distanceMoyParcouru = distanceMoyParcouru * 3.55;
+						}
+						
+						break;
 					}
-					break;
-					
-					case TOURNER:
-					i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
-					angleActuel=getAzimuth();
-					_delay_ms(10);
-					if(tourner(angleDest,angleActuel))
-					{
-						encodeurDCnt=0;
-						encodeurGCnt=0;
-						etapeModeAuto=AJUSTER;
-					}
-					break;
-					case AJUSTER:
-					i2cReadBytes(QMC5883_ADDRESS_MAG,0x0,0x06);//lis registre x,y,z
-					angleActuel=getAzimuth();
-					
-					_delay_ms(10);
-					
-					ajusterDrirection(angleDest,angleActuel);
-					//_delay_ms(10);
-					
-					if(distanceMoyParcouru>=distanceDest)
-					{
-						etapeModeAuto=ORIENTER;
-						//orientation=DISTANCE;
-						indexDestination++;
-						nbPointGpsDispo--;
-					}
-					else
-					{
-						distanceMoyParcouru = (((float)(encodeurDCnt+encodeurGCnt))/2.0);
-						distanceMoyParcouru = distanceMoyParcouru * 3.55;
-					}
-					
-					break;
+				}
+				else
+				{
+					flagRetourMaison=1;
 				}
 			}
-			else
-			{
-				retourMaison(tabLatMemJs[0],tabLonMemJs[0]);
-				OCR4B=0;
-				OCR5B=0;
-				OCR4C=0;
-				OCR5C=0;
-			}
-			//_delay_ms(200);
-			//getNavPvtTime(msgTime);
-
 			break;
+			
 			
 			case SET_TIME:
 			_delay_ms(200);
@@ -701,7 +741,7 @@ int main(void)
 			break;
 		}
 		
-		if(modeTondeuse!=1)
+		if(modeTondeuse!=1) //condition pour l'envoi Bluetooth, gestion différente pour le mode Prog de la tondeuse (modeTondeuse!=1).
 		{
 			if(refreshEnvoi)
 			{
@@ -731,13 +771,13 @@ int main(void)
 /*Section vecteurs d'interruption*/
 
 /**
-* @brief //A chaque interruption du timer 0 le programme execute DixiemeDeSec++ comme ca on verifie l'etat des boutons a chaque 100ms.
+* @brief À chaque interruption du timer 0 le programme execute DixiemeDeSec++ comme ça on verifie l'etat des boutons a chaque 100ms. De plus, cette interruption sert à rafraîchir l'affichage LCD et l'envoi bluetooth.
 */
 ISR(TIMER0_COMPA_vect)//Quand l'interruption globale est appeller le programme vient executer le vecteur Comparatif.
 {
 	cntDixiemeDeSec++;
 	cntDixiemeDeSecLCD++;
-	refreshAuto = 1;
+	refreshAuto = 1; //test pour le rafraîchissement de la lecture du compas dans le mode automatique
 	if(cntDixiemeDeSec >= 100)
 	{
 		cntDixiemeDeSec -= 100;
@@ -751,30 +791,40 @@ ISR(TIMER0_COMPA_vect)//Quand l'interruption globale est appeller le programme v
 		refreshEnvoi = 1;
 	}
 }
-ISR(PCINT1_vect)//A chaque detection du capteur une interruption se fait sur PCINT4 et PCINT5 qui correspond a la PINB4 et PINB5 du atmega32u4
+/**
+* @brief À chaque interruption externe déclencher par les encodeurs optiques, ce vecteur d'interruption est appelé et il incremente les variables des encodeurs pour ensuite calculer la distance que le robot a parcourue en effectuant un calcul à l'aide du diamètre des ses roues dans le mode automatique.
+*/
+ISR(PCINT1_vect)//A chaque detection du capteur une interruption se fait sur PCINT1 et PCINT2 qui correspondent aux pins PINJ3 et PINB5 du atmega2560
 {
-	if(!(PINJ&(1<<3))&&(encodeurEtatPrecedent & (1<<3)))//si l'etat du capteur est low et qu'il y eu une detection comme etat precedant
+	if(derivation>=-5 && derivation<=5)
 	{
-		encodeurDCnt++;//le compteur d'enchoches s'incremente
-		refreshDist = 1;//on active le refresh l'affichache sur le LCD
+		if(!(PINJ&(1<<3))&&(encodeurEtatPrecedent & (1<<3)))//si l'etat du capteur est low et qu'il y eu une detection comme etat precedant
+		{
+			encodeurDCnt++;//le compteur d'enchoches s'incremente
+			refreshDist = 1;//on active le refresh l'affichache sur le LCD
+		}
+		encodeurEtatPrecedent = PINJ&(1<<3);
+		if(!(PINJ&(1<<4))&&(encodeurEtatPrecedent2 & (1<<4)))//si l'etat du capteur est low et qu'il y eu une détection comme etat precedant
+		{
+			encodeurGCnt++;//le compteur d'enchoches s'incremente
+			refreshDist = 1;//on active le refresh de l'affichage sur la console pour le débogage
+		}
+		encodeurEtatPrecedent2 = PINJ&(1<<4);
 	}
-	encodeurEtatPrecedent = PINJ&(1<<3);
-	if(!(PINJ&(1<<4))&&(encodeurEtatPrecedent2 & (1<<4)))//si l'etat du capteur est low et qu'il y eu une detection comme etat precedant
-	{
-		encodeurGCnt++;//le compteur d'enchoches s'incremente
-		refreshDist = 1;//on active le refresh l'affichache sur la console
-	}
-	encodeurEtatPrecedent2 = PINJ&(1<<4);
 }
+
+/**
+* @brief À chaque interruption causé par la lecture de l'ADC, ce vecteur d'interruption est appelé. Ensuite, on vérifie l'origine de réception de cette valeur (Batterie, joystick ou capteur de pluie) et on récupere cette valeur dans une variable en fonction de son origine.
+*/
 
 ISR(ADC_vect)
 {
-	receptionAdc=ADC;
-	triAdc=((ADCSRB&&0x8)<<5)|(ADMUX&0x1F);
+	receptionAdc=ADC; //récupère la valeur de tension lue par le ADC sur un total de 0 à 1024 (10 bits)
+	triAdc=((ADCSRB&&0x8)<<5)|(ADMUX&0x1F); //récupere le registre de lecture ADC affecté
 	switch(triAdc)
 	{
-		case 0x0:
-		if(receptionAdc<=512)
+		case 0x0: //case capteur de pluie
+		if(receptionAdc<=512) //après la calibration le capteur détecte la pluie à 512 sur 1024
 		{
 			lcdSetPos(8,1);
 			lcdPuts("pluie");
@@ -784,24 +834,24 @@ ISR(ADC_vect)
 		{
 			flagPluie = 0;
 		}
-		ADMUX=0x41;
+		ADMUX=0x41; //changer le registe ADC pour la prochaine lecture
 		break;
 
 		case 0x1:
 		//joysticX=receptionAdc-512;
-		ADMUX=0x42;
+		ADMUX=0x42; //changer le registe ADC pour la prochaine lecture
 		break;
 
 		case 0x2:
 		//joysticY=receptionAdc-512;
-		ADMUX=0x40;
+		ADMUX=0x40; //changer le registe ADC pour la prochaine lecture
 		ADCSRB|=(1<<MUX5);
 		break;
 
 		case 0x20:
 		niveauBatterie=((float)receptionAdc/1023.0)*100.0;
 		niveauBatterie=(niveauBatterie-75.0)*4.0;
-		ADMUX=0x40;
+		ADMUX=0x40; //changer le registe ADC pour la prochaine lecture
 		ADCSRB&=~(1<<MUX5);
 		break;
 
@@ -811,7 +861,11 @@ ISR(ADC_vect)
 	ADCSRA|=(1<<ADSC);
 }
 
-/*Definition des fonctions*/
+/*Définition des fonctions*/
+
+/**
+* @brief Fonction qui intialise les trois ADC du atmega2560 qui servent à mesurer la tension de la batterie, la tension à la sortie du capteur de pluie en fonction de son état et la tension de l'axe Y et l'axe X du joystick analogique pour le controle manuel du robot.
+*/
 
 void adcInit()
 {
@@ -822,6 +876,11 @@ void adcInit()
 	DIDR2|=0x01;//mets la pin en adc8
 	sei();
 }
+
+/**
+* @brief Cette fonction initialise les registres PWM du atmega2560 pour le contrôle des trois moteurs du robot tondeuse. Tout les PWM pour les moteurs sont intialisés à une fréquence de 15.6 kHz en mode FAST PWM avec un top de 1024.
+*/
+
 void moteurInit()
 {
 	DDRH|=(1<<4)|(1<<5);//moteur arrière 2 gauche
@@ -846,28 +905,39 @@ void moteurInit()
 	OCR1B=90;
 	OCR1C=0;
 }
+
+/**
+* @brief Cette fonction vérifie l'état des 4 pins du clavier matriciel et elle retourne le caractère correpondant à la touche appuyé.
+*
+* @return De type char correspond au caractère ASCII de chaque touche.
+*/
+
 char lireClavier()
 {
 	char digit = 0;
 	
-	if(BT1())
+	if(BT1()) //touche 1
 	{
 		digit = '1';
 	}
-	else if(BT2())
+	else if(BT2()) //touche 2
 	{
 		digit = '2';
 	}
-	else if(BT3())
+	else if(BT3()) //touche 3
 	{
 		digit = '3';
 	}
-	else if(BT4())
+	else if(BT4()) //touche 4
 	{
 		digit = '4';
 	}
 	return digit;
 }
+
+/**
+* @brief Cette fonction utilise la valeur de l'axe X et Y du joystick, ensuite elle gère le sens de rotation et la vitesse des deux moteurs pour les roues. Elle utilise les valeurs du joystick analogique connecté au ADC et la valeur recue du joytstick sur la manette de PS4. On vérifie le cadran en X et Y de la valeur recue et ensuite on effectue les calculs nécessaire pour limiter les registres PWM des moteurs entre 0 et 1024 et on inverse le sens de rotation aussi en fonction des ces cadrans.
+*/
 
 void controleManuel()
 {
@@ -920,9 +990,16 @@ void controleManuel()
 			OCR5C=(VIT_MIN+vitesseMoteurG);
 		}
 	}
-	
-	
 }
+
+/**
+* @brief Cette fonction possède l'algorithme de type PID qui ajuste la direction du robot pour le faire avancer toujours vers l'angle de destination. De plus, cette fonction permet de reajuster le robot vers la bonne direction même si une personne le déplace pendant son fonctionnement. On récupère le deltaDerive et on utilise un algorithme à fenêtre glissante pour attenuer le bruit au niveau de la lecture de l'angle en on affecte les registres PWM des moteurs à l'aide de la variable valPID pour permettre au robot d'avancer d'une façon stable et continue.
+*
+* @param angleDest de type uint16_t recoit l'angle calculée à atteindre par le robot.
+*
+* @param angleActuel de type uint16_t correspond à l'angle actuel du robot envoyée par le module QMC5883L.
+*/
+
 void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=angleActuel-angleDest peut-être mettre juste une fonction pour tourner et ajuster
 {
 	//si pas de derive avance en ligne droite avec les valeurs de pid vitesseMoteur max =512
@@ -930,9 +1007,9 @@ void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=a
 	//ocr1B controle de la lame 1024 actif 0 inactif
 	//if(OCR1B!=1024)
 	//OCR1B=1024;
-	uint8_t cote=0;
+	static uint8_t cote;
 	int deltaDerive=angleDest-angleActuel;
-	//variation=erreur-erreurPrec;
+	uint16_t over=angleActuel+180;
 	//quel côté affecter
 	uint16_t angle=0;
 
@@ -943,16 +1020,22 @@ void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=a
 	}
 	else
 	angle=deltaDerive;
+	
+	if(over<angleDest)
+	{
+		deltaDerive-=360;
+		deltaDerive*=-1;
+	}
 
 	if(angle<180)
-	{// tourne à droite
+	{// tourne à gauche
 		cote=0;
 	}
 	else
-	{//tourne à gauche
+	{//tourne à droite
 		cote=1;
 	}
-
+	derivation=deltaDerive;
 
 	//fenêtre
 	for (int i = (TAILLE_FENETRE-1); i > 0; i--) {
@@ -994,11 +1077,22 @@ void ajusterDrirection(uint16_t angleDest, uint16_t angleActuel)//deltadervive=a
 	}
 	//erreurPrec=deltaDerive;
 }
+
+/**
+* @brief Cette fonction sert à orienter le robot vers l'angle de destination du point à atteindre. On effectue la différence entre l'angle de destination calculée et l'angle actuel du robot envoyé par le module QMC5883L et en fonction du cadran qu'on se retrouve on fait tourner le robot vers la direction la plus proche de l'angle à atteindre. Une fois que le robot a atteint l'angle de destination il arrête à +- 2 degrées de précision.
+*
+* @param angleDest est de type uint16_t et elle recoit l'angle de destination calculée entre deux coordonées GPS.
+*
+* @param angleActuel est de type uint16_t et elle recoit l'angle actuel du robot envoyée par le module compas magnétique QMC5883L.
+*
+* @return est de type uint8_t et retourne 0 si le robot n'a pas encore atteint la bonne orientation, sinon 1 s'il a atteint l'angle de destination.
+*/
+
 uint8_t tourner(uint16_t angleDest, uint16_t angleActuel)
 {
-	//if(OCR1B!=1024)//active la lame
+	//if(OCR1B!=1024)//active la lame, enlevé pour les tests de la fonction
 	//OCR1B=1024;
-	//appeler lorsque l'on arrive à un waypoints
+	//appeler lorsque l'on arrive à un waypoint
 	int deltaDerive=angleDest-angleActuel;
 	static uint8_t direction;
 	uint16_t angle=0;
@@ -1052,9 +1146,14 @@ uint8_t tourner(uint16_t angleDest, uint16_t angleActuel)
 	}
 	return 0;
 }
+
+/**
+* @brief Cette fonction active les deux moteurs du robot et le fait tourner sur lui-même. Cette fonction est essentielle au démarrage du robot pour bien calibrer le compas digital.
+*/
+
 void effectuerCalibration()
 {
-	while(!calibration())
+	while(!calibration())//effectuer tant que la calibration du module
 	{
 		OCR4B=0;
 		OCR5B=0;
@@ -1066,14 +1165,30 @@ void effectuerCalibration()
 	OCR4C=0;
 	OCR5C=0;
 }
+
+/**
+* @brief Cette fonction initialise la communication I2C entre le atmega2560 et le compas QMC5883L. Ensuite, elle applique la configuration du module QMC5883L, comme sa vitesse de communication son nombre de samples et le mode de communication master->slave.
+*/
+
 void initBoussole()
 {
 	i2cInit();
 	i2cWriteByte(QMC5883_ADDRESS_MAG,0x0B,0x01);
 	setMode(0x01,0x0C,0x10,0X00);
 }
+
+
+/**
+* @brief Cette fonction est identique à l'algorithme de contrôle automatique du robot. En premier, elle recupère le positionnement (longitude, latitude) du robot à partir du module GPS si la précision 2D de la mesure est inférieure à 5 cm. À l'aide de ces données en combinaison avec les coordonnées de destination envoyées par le serveur local, on calcule la distance à parcourir et l'angle de destination. Ensuite, on effectue le case tourner pour orienter le robot vers le bon angle de 0 à 360 à l'aide du module QMC5883L. Une fois que le robot est dans la bonne orientation, il avance vers le point de destination et il garde la bonne direction à l'aide de l'algorithme PID dans la fonction ajusterDirection. La distance parcourue par le robot est calculée à l'aide de la moyenne des deux encodeurs optiques. Cette fonction retourne le robot à la coordonné 0 du tableau de points, qui correspond au point d'origine (retour à la maison).
+*
+* @param latitudeMaison est de type float et cette variable recoit la latitude de la coordonée maison.
+*
+* @param longitudeMaison est de type float et cette variable recoit la longitude de la coordonée maison.
+*/
+
 void retourMaison(float latitudeMaison,float longitudeMaison)
 {
+	etatCoupe=4;
 	switch(etapeModeAuto)
 	{
 		case ORIENTER:
@@ -1085,19 +1200,23 @@ void retourMaison(float latitudeMaison,float longitudeMaison)
 				lat=getNavPvtLat();
 				lon=getNavPvtLon();
 				horizontalAcc=getNavPvtVacc();//en mm
-				verticalAcc=getNavPvtHacc();//en mm
-				if(horizontalAcc<=40 && verticalAcc<=40)//check precision 2d,horizon, et 3d,vertical,
+				
+				if(horizontalAcc<=40 )//check precision 2d,horizon, et 3d,vertical,
 				{
 					//pour test tabLatMem[indexDestination]
 					switch (orientation)
 					{
 						case DISTANCE:
+						cli();
 						distanceDest=distance_entre_point(lat,lon,latitudeMaison,longitudeMaison);//lat actuel, lon actuel, lat dest,lon dest
+						sei();
 						orientation=ANGLE;
 						break;
 
 						case ANGLE:
+						cli();
 						angleDest=course(lat, lon,latitudeMaison,longitudeMaison);//index=1 depart
+						sei();
 						orientation=FINI;
 						break;
 
@@ -1121,10 +1240,13 @@ void retourMaison(float latitudeMaison,float longitudeMaison)
 			break;
 			case AJUSTER:
 			ajusterDrirection(angleDest,angleActuel);
-			distanceMoyParcouru= ((encodeurDCnt+encodeurGCnt)/2)*3.45;
+			distanceMoyParcouru= ((encodeurDCnt+encodeurGCnt)/2)*3.45; //calcul pour effectuer la moyenne de la valeur des deux encodeurs
 			if(distanceMoyParcouru>=distanceDest)
 			{
 				//remettre alerte pluie ou batterie à 0
+				flagRetourMaison=0;
+				if(nbPointGpsDispo>1)
+				nbPointGpsDispo=1;
 				OCR4B=0;
 				OCR5B=0;
 				OCR4C=0;

@@ -1,10 +1,13 @@
-/*
-* LiDAR.h
+/**
+* @file LiDAR.h
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Cette bibliothèque possède le prototype des fonctions pour le traitement de la trame de reception envoyée par le LiDAR. De plus, elle possède plusieurs getters pour la récuperation de la distance, les amp et la température interne du module.
+* @version 1.0
+* @date 12 avril 2023
 *
-* Created: 2023-03-28 10:54:14 AM
-*  Author: adino
+* @copyright Copyright (c) 2023
+*
 */
-
 
 #ifndef LIDAR_H_
 #define LIDAR_H_
@@ -18,8 +21,5 @@ uint8_t parseRxLidar(uint8_t u8Data);
 uint16_t getDist();
 uint16_t getAmp();
 uint16_t getTemp();
-
-
-
 
 #endif /* LIDAR_H_ */

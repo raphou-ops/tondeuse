@@ -1,9 +1,9 @@
 /**
 * @file lcd.h
-* @Adrian Catuneanu (adinone3@gmail.com)
-* @version 0.01
+* @author Adrian Catuneanu (adinone3@gmail.com)
+* @version 1.0
 * @date 17 septembre 2021
-* @brief Cette bibliotheque contient la declaration des macros pour pouvoir interagir avec le HD44780 a partir du atmega32u4 ainsi que le prototype des fonction dans le fichier .lcd
+* @brief Cette bibliothèque contient la declaration des macros pour pouvoir interagir avec le HD44780 à partir du atmega2560 ainsi que le prototype des fonction dans le fichier lcd.c
 */
 
 

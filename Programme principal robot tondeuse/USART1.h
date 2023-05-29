@@ -1,9 +1,9 @@
 /**
-* @file USART.h
-* @Adrian Catuneanu (adinone3@gmail.com)
-* @version 0.01
-* @date 13 novembre 2021
-* @brief Cette bibliotheque contient les prototypes de fonctions pour la communication USART a partir du atmega32u4 vers le PC et vice-versa via le fil USART a usb.
+* @file USART1.h
+* @author Adrian Catuneanu (adinone3@gmail.com)
+* @version 1.1
+* @date 20 mars 2023
+* @brief Cette bibliotheque contient les prototypes de fonctions pour la communication USART à partir du atmega2560 avec le module GPS RTK simpleRTK2B de ardusimple avec la chip ZEDF9P. On utilise majoritairement les fonctions de réception pour recevoir la position en latitude longitude et le différents paramètres de la trame UBX-NAV-PVT. De plus, on utilise les fonctions d'envoi pour configurer le module GPS au démmarage du robot.
 */
 
 

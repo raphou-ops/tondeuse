@@ -1,16 +1,20 @@
-/*
-* I2C.h
+/**
+* @file I2C.h
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Cette bibliothèque possède le prototype des fonctions pour la configuration et la gestion de la communication I2C entre le atmega2560 et le compas magnétique QMC5883L. De plus, cette librairie possède aussi des fonctions pour le calibrage du QMC5883L et la récuperation de données, comme l'azimuth, l'angle en X, l'angle en Y et l'angle en Z. Ces données sont récuperés à l'aide de calculs mathématiques de la librairie MATH.h.
+* @version 1.0
+* @date 2023-04-24
 *
-* Created: 2022-03-13 15:05:12
-*  Author: rapho
+* @copyright Copyright (c) 2023
 */
+
 #define F_CPU 16000000
 #include "avr/io.h"
 #include "lcd.h"
 #include <math.h>
 #include <util/delay.h>
 
-#define RAYON_TERRE	 637800000.0//cm
+#define RAYON_TERRE	 637100000.0//cm
 #ifndef I2C_H_
 #define I2C_H_
 #define ANGLE_DECLIN  13.783333
@@ -102,7 +106,6 @@ void setMode(uint8_t mode, uint8_t odr, uint8_t rng, uint8_t osr);
 
 void setReset();
 
-
 //qmc5883
 
 int getX();
@@ -123,9 +126,5 @@ uint8_t calibration();
 
 void setSmoothing(uint8_t steps, uint8_t adv);
 void _smoothing();
-
-//test
-float distance_entre_point_long(long lat1,long lon1,long lat2,long lon2);
-float course_long(long lat1, long lon1, long lat2, long lon2);
 
 #endif /* I2C_H_ */

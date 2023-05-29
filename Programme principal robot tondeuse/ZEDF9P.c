@@ -1,8 +1,11 @@
-/*
-* ZED_F9P.c
+/**
+* @file ZEDF9P.c
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Cette bibliothèque possède la définition de fonctions qui servent à traiter les donnés GPS du module ZEDF9P recues par le UART au atmega2560. De plus, cette bibliothèque possède plusieurs getters pour convertir et réecuperer plusieurs données comme le type de fix du module, la longitude, la latitude, la précision en 2D, etc. On fonctionne avec la datasheet de U-BLOX qui explique le protocol UBX. Finalement, on utilise majoritairement la trame UBX-NAV-PVT pour récupere ces données et on a aussi programmé des fonctions pour la configuration du module par UART à partir du atmega2560.
+* @version 1.1
+* @date 2023-05-10
 *
-* Created: 2023-03-10 10:35:41 AM
-*  Author: adino
+* @copyright Copyright (c) 2023
 */
 
 #include "ZEDF9P.h"
@@ -47,6 +50,14 @@ uint8_t navPvtFlags2 = 0;
 uint8_t navPvtValide = 0;
 // unsigned long distance = 0;
 // unsigned long distanceTotale = 0;
+
+/**
+* @brief Cette fonction traite la trame UBX-NAV-PVT recue octet par octet. De plus, cette fonction vérifie la validité de la trame GPS recue en calculant le checksum et en comparant la valeur obtenue avec celle recue. Elle traite et valide aussi la trame POSLLH pour effectuer des tests de performance pour la communication entre le robot et le module GPS.
+*
+* @param u8Data de type uint8_t, récupere l'octet recu par le lien uart avec le module GPS, le traite et valide la trame recue.
+*
+* @return de type uint8_t retourne 1 si la trame recue est valide et retourne 0 si la trame recue n'est pas valide.
+*/
 
 uint8_t parseRxUbxNavPvt(uint8_t u8Data)
 {
@@ -223,10 +234,22 @@ uint8_t parseRxUbxNavPvt(uint8_t u8Data)
 	return retour2;
 }
 
+/**
+* @brief Cette fonction est un getter qui retourne le ID de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le ID de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 uint8_t getId()
 {
 	return trame;
 }
+
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne la latitude de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne la latitude de la dernière trame valide UBX-NAV-PVT recue.
+*/
 
 float getNavPvtLat()
 {
@@ -243,6 +266,12 @@ float getNavPvtLat()
 	return ((float)latitude)*1e-7; //en deg
 }
 
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne la longitude de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne la longitude de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 float getNavPvtLon()
 {
 	uint8_t tabLon[4];
@@ -258,6 +287,12 @@ float getNavPvtLon()
 	return ((float)longitude)*1e-7; //en deg
 }
 
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le heading of motion (2D) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le heading of motion (2D) de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 float getNavPvtHeadMot() //heading motion 2-D
 {
 	uint8_t tabHeadMot[4];
@@ -271,6 +306,12 @@ float getNavPvtHeadMot() //heading motion 2-D
 	memcpy(&headMot, tabHeadMot, sizeof(headMot));
 	return ((float)headMot)*1e-5; //en deg
 }
+
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le ground speed (2D) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le ground speed (2D) de la dernière trame valide UBX-NAV-PVT recue.
+*/
 
 long getNavPvtGspeed() //ground speed 2-D
 {
@@ -286,6 +327,12 @@ long getNavPvtGspeed() //ground speed 2-D
 	return gSpeed; //en mm/s
 }
 
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le speed accuracy estimate (2D) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le speed accuracy estimate (2D) de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 unsigned long getNavPvtSacc() //speed accuracy estimate
 {
 	uint8_t tabSacc[4];
@@ -299,6 +346,12 @@ unsigned long getNavPvtSacc() //speed accuracy estimate
 	memcpy(&sAcc, tabSacc, sizeof(sAcc));
 	return sAcc; //en mm/s
 }
+
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le heading accuracy estimate (2D) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le heading accuracy estimate (2D) de la dernière trame valide UBX-NAV-PVT recue.
+*/
 
 float getNavPvtHeadAcc() // heading accuracy estimate
 {
@@ -314,6 +367,12 @@ float getNavPvtHeadAcc() // heading accuracy estimate
 	return ((float)headAcc)*1e-5; //en deg
 }
 
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le heading of vehicle (2D) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le heading of vehicle (2D) de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 float getNavPvtHeadVeh() // heading of vehicle 2-D
 {
 	uint8_t tabHeadVeh[4];
@@ -328,6 +387,12 @@ float getNavPvtHeadVeh() // heading of vehicle 2-D
 	return ((float)headVeh)*1e-5; //en deg
 }
 
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le horizontal accuracy estimate (2D) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le horizontal accuracy estimate (2D) de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 unsigned long getNavPvtHacc() //horizontal accuracy estimate
 {
 	uint8_t tabHacc[4];
@@ -341,7 +406,14 @@ unsigned long getNavPvtHacc() //horizontal accuracy estimate
 	memcpy(&hAcc, tabHacc, sizeof(hAcc));
 	return hAcc; //en mm
 }
-unsigned long getNavPvtVacc() //horizontal accuracy estimate
+
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le vertical accuracy estimate (3D) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le vertical accuracy estimate (3D) de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
+unsigned long getNavPvtVacc() //vertical accuracy estimate
 {
 	uint8_t tabVacc[4];
 	
@@ -355,20 +427,44 @@ unsigned long getNavPvtVacc() //horizontal accuracy estimate
 	return vAcc; //en mm
 }
 
+/**
+* @brief Cette fonction est un getter qui retourne le fix status flags de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le fix status flags de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 uint8_t getNavPvtFlags() //fix status flags
 {
 	return trameGpsNavPvtValide[27];
 }
+
+/**
+* @brief Cette fonction est un getter qui retourne le deuxième fix status flags de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le deuxième fix status flags de la dernière trame valide UBX-NAV-PVT recue.
+*/
 
 uint8_t getNavPvtFlags2() //additional flags
 {
 	return trameGpsNavPvtValide[28];
 }
 
+/**
+* @brief Cette fonction est un getter qui retourne les validity flags de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne les validity flags de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 uint8_t getNavPvtValid() //validity flags
 {
 	return trameGpsNavPvtValide[17];
 }
+
+/**
+* @brief Cette fonction est un getter qui retourne le type de fix de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le type de fix de la dernière trame valide UBX-NAV-PVT recue.
+*/
 
 unsigned char getNavPvtFixType()
 {
@@ -378,6 +474,13 @@ unsigned char getNavPvtFixType()
 	
 	return etatFixGps;
 }
+
+/**
+* @brief Cette fonction est un getter qui convertit au bon format et retourne le PDOP (chiffre inférieur si le nombre de sattelites percus augmente) de la trame UBX-NAV-PVT recue.
+*
+* @return de type uint8_t, retourne le PDOP (chiffre inférieur si le nombre de sattelites percus augmente) de la dernière trame valide UBX-NAV-PVT recue.
+*/
+
 float getNavPvtPdop()
 {
 	uint16_t pDOP = 0;
@@ -391,7 +494,7 @@ float getNavPvtPdop()
 	return ((float)pDOP)/100.0; //en deg
 }
 
-
+//Partie de code pour la recuperation de la distance parcourue de l'odomètre du module GPS
 
 // unsigned long getNavOdoDistance()
 // {
@@ -421,6 +524,16 @@ float getNavPvtPdop()
 // 	return distanceTotale;
 // }
 
+/**
+* @brief Cette fonction calcule le checksum de la trame de configuration à envoyer vers le module GPS. Ce calcul est spécifié dans la datasheet du protocol UBX.
+*
+* @param trame est un pointeur qui sert à parcourir un tableau de type uint8_t. Le tableau correspond à la trame que l'utilisateur veut envoyer vers le module simpleRTK2b.
+*
+* @param size de type uint8_t est la taille de la trame que l'utilisateur veut envoyer
+*
+* @return de type uint16_t retourne le résultat du checksum
+*/
+
 uint16_t calculerChecksum(uint8_t*trame,uint8_t size)
 {
 	uint8_t checksumA=0;
@@ -436,6 +549,12 @@ uint16_t calculerChecksum(uint8_t*trame,uint8_t size)
 	return retour;
 }
 
+/**
+* @brief Cette fonction sert à configurer le baudrate du port UART1 sur le module GPS en créant une trame et en l'envoyant vers le module GPS.
+*
+* @param baudrate de type uint8_t correspond au baudrate que l'utilisateur veut configurer la communication du UART1 sur le module GPS.
+*/
+
 void envoieConfigPortUart1(uint32_t baudrate)
 {
 	//{0xB5, 0x62, 0x06, 0x00, 0x14, 0x00, 0x01, 0x00, 0x00, 0x00, 0xD0, 0x08, 0x00, 0x00, 0x80, 0x25, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x9A, 0x79}
@@ -447,6 +566,12 @@ void envoieConfigPortUart1(uint32_t baudrate)
 	usartGpsSendBytes(trameConfigEnvoi,28);
 	ackConfigUart1 = 0;
 }
+
+/**
+* @brief Cette fonction sert à configurer la fréquence d'envoi du module GPS à partir du atmega2560 en créant une trame de configuration et en l'envoyant par UART vers le module GPS.
+*
+* @param frequence de type uint8_t correspond à la fréquence d'envoi de données du module GPS dont l'utilisateur désire appliquer.
+*/
 
 void envoieConfigRate(uint8_t frequence)
 {
@@ -463,6 +588,16 @@ void envoieConfigRate(uint8_t frequence)
 	ackConfigRate = 0;
 }
 
+/**
+* @brief Cette fonction sert a créer une trame de configuration pour la communication USB et UART du module GPS. L'utilisateur peut avec cette fonction désactiver ou activer les différentes méthodes de communication du module GPS. Finalement, avec le id il peut activer la réception des différentes trames UBX sur le lien de communication désiré.
+*
+* @param id de type uint8_t recoit le type de trame UBX à activer sur le module GPS
+*
+* @param etatUart1 de type uint8_t recoit 1 lorsque l'utilisateur veut activer la réception de ce type de message par le uart1 du module GPS.
+*
+* @param etatUsb de type uint8_t recoit 1 lorsque l'utilisateur veut activer la réception de ce type de message par le USB du module GPS.
+*/
+
 void envoieConfigMsg(uint8_t id,uint8_t etatUart1,uint8_t etatUsb)
 {
 	uint16_t crc=0;
@@ -476,36 +611,68 @@ void envoieConfigMsg(uint8_t id,uint8_t etatUart1,uint8_t etatUsb)
 	ackConfigMsg = 0;
 }
 
-void envoieConfigOdo(uint8_t etatOdo,uint8_t etatLowSpeed,uint8_t etatVelocity,uint8_t etatHeading,uint8_t speedThreshold,uint8_t maxAccuracy,uint8_t velocityLevel,uint8_t headingLevel )
-{
-	uint16_t crc=0;
-	uint8_t odoFlags=etatOdo|(etatLowSpeed<<1)|(etatVelocity<<2)|(etatHeading<<3);
-	uint8_t trameConfigEnvoi[28]={0xB5, 0x62, 0x06, 0x1E, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, odoFlags, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, speedThreshold, maxAccuracy, 0x00, 0x00, velocityLevel, headingLevel, 0x00, 0x00, 0, 0};
-	crc = calculerChecksum(trameConfigEnvoi,20);
-	trameConfigEnvoi[26]= crc&0xFF;
-	trameConfigEnvoi[27]= crc>>8;
-	usartGpsSendBytes(trameConfigEnvoi,28);
-}
+//Décommenter si on utilise la configuration de l'odomètre
+
+// void envoieConfigOdo(uint8_t etatOdo,uint8_t etatLowSpeed,uint8_t etatVelocity,uint8_t etatHeading,uint8_t speedThreshold,uint8_t maxAccuracy,uint8_t velocityLevel,uint8_t headingLevel )
+// {
+// 	uint16_t crc=0;
+// 	uint8_t odoFlags=etatOdo|(etatLowSpeed<<1)|(etatVelocity<<2)|(etatHeading<<3);
+// 	uint8_t trameConfigEnvoi[28]={0xB5, 0x62, 0x06, 0x1E, 0x14, 0x00, 0x00, 0x00, 0x00, 0x00, odoFlags, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, speedThreshold, maxAccuracy, 0x00, 0x00, velocityLevel, headingLevel, 0x00, 0x00, 0, 0};
+// 	crc = calculerChecksum(trameConfigEnvoi,20);
+// 	trameConfigEnvoi[26]= crc&0xFF;
+// 	trameConfigEnvoi[27]= crc>>8;
+// 	usartGpsSendBytes(trameConfigEnvoi,28);
+// }
+
+/**
+* @brief Cette fonction est un getter qui récupere l'état du Ack pour la configuration du port UART1 du module GPS.
+*
+* @return de type uint8_t retourne 1 si le module GPS a bien recue la commande.
+*/
 
 uint8_t getAckConfigUart1()
 {
 	return ackConfigUart1;
 }
 
+/**
+* @brief Cette fonction est un getter qui récupere l'état du Ack pour la configuration de la fréquence d'envoi des données du module GPS.
+*
+* @return de type uint8_t retourne 1 si le module GPS a bien recue la commande.
+*/
+
 uint8_t getAckConfigRate()
 {
 	return ackConfigRate;
 }
+
+/**
+* @brief Cette fonction est un getter qui récupere l'état du Ack pour la configuration des messages UBX.
+*
+* @return de type uint8_t retourne 1 si le module GPS a bien recue la commande.
+*/
 
 uint8_t getAckConfigMsg()
 {
 	return ackConfigMsg;
 }
 
+/**
+* @brief Cette fonction est un getter qui récupere l'état du Ack pour la configuration de l'odomètre.
+*
+* @return de type uint8_t retourne 1 si le module GPS a bien recue la commande.
+*/
+
 uint8_t getAckConfigOdo()
 {
 	return ackConfigOdo;
 }
+
+/**
+* @brief Cette fonction est un getter qui recupère l'heure du module GPS et la met sous le bon format (HH:MM) pour l'affichage et l'heure de coupe du robot tondeuse.
+*
+* @param msg est un pointeur de type char qui recoit le tableau de caractères que l'utilisateur désire affecter avec l'heure actuelle.
+*/
 
 void getNavPvtTime(char* msg)
 {

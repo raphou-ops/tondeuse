@@ -1,9 +1,9 @@
 /**
-* @file USART.h
-* @Adrian Catuneanu (adinone3@gmail.com)
-* @version 0.01
-* @date 13 novembre 2021
-* @brief Cette bibliotheque contient les prototypes de fonctions pour la communication USART a partir du atmega32u4 vers le PC et vice-versa via le fil USART a usb.
+* @file USART2.h
+* @author Adrian Catuneanu (adinone3@gmail.com)
+* @version 1.1
+* @date 12 avril 2023
+* @brief Cette bibliothèque offre les prototypes des fonctions pour la communication USART à l'aide du atmega2560 avec le module HC-06 Bluetooth. On utilise les fonctions d'envoi pour transmettre les états du robot vers le serveur nodeJs et le fonctions de reception pour recevoir les commandes à partir du site web.
 */
 
 

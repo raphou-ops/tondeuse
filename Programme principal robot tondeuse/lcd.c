@@ -1,10 +1,11 @@
 /**
 * @file lcd.c
 * @author Adrian Catuneanu (adinone3@gmail.com)
-* @version 0.01
-* @date 17 septembre 2014
-* @brief Cette bibliothèque offre les definitions des fonctions pour l’utilisation d’un afficheur LCD HD44780 a l'aide du atmega32u4.
+* @version 1.0
+* @date 17 septembre 2021
+* @brief Cette bibliothèque offre les definitions des fonctions pour l’utilisation d’un afficheur LCD HD44780 à l'aide du atmega2560.
 */
+
 #include "lcd.h"
 
 //Prototypes des fonctions privees
@@ -158,7 +159,7 @@ void lcdSetPos(uint8_t x, uint8_t y)
 }
 
 /**
-* @brief Cete fonction sert a reset l'ecriture afficher sur le LCD
+* @brief Cete fonction sert à reset l'ecriture afficher sur le LCD. En résumé elle enleve tout les caractères affichés sur le LCD
 */
 
 void lcdClearScreen()

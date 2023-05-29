@@ -1,8 +1,12 @@
-/*
-* LiDAR.c
+/**
+* @file LiDAR.c
+* @author Adrian Catuneanu et Raphaël Tazbaz
+* @brief Cette bibliothèque possède la définition des fonctions pour le traitement de la trame de reception envoyée par le LiDAR. De plus, elle possède plusieurs getters pour la récuperation de la distance, les amp et la température interne du module.
+* @version 1.0
+* @date 12 avril 2023
 *
-* Created: 2023-03-28 10:53:52 AM
-*  Author: adino
+* @copyright Copyright (c) 2023
+*
 */
 
 #include "LiDAR.h"
@@ -23,6 +27,14 @@ uint8_t retour = 0;
 uint16_t dist = 0;
 uint16_t amp = 0;
 uint16_t temp = 0;
+
+/**
+* @brief Cette fonction sert à traiter les donnés envoyées par le Lidar au atmega2560 et vérifier si la trame recue est valide.
+*
+* @param u8Data de type uint8_t recoit l'octet envoyé par le TF-Luna mini Lidar et le traite pour récuperer une trame valide de réception.
+*
+* @return de type uint8_t, elle retourne 1 si la trame recue est valide et 0 si la trame recue est invalide.
+*/
 
 uint8_t parseRxLidar(uint8_t u8Data)
 {
@@ -87,14 +99,34 @@ uint8_t parseRxLidar(uint8_t u8Data)
 	return retour;
 }
 
+/**
+* @brief Cette fonction s'agit d'un getter qui récupere la distance en cm détecté par le Lidar.
+*
+* @return de type uint16_t retourne la distance en cm détecté par le Lidar.
+*/
+
 uint16_t getDist()
 {
 	return dist;
 }
+
+/**
+* @brief Cette fonction s'agit d'un getter qui récupere la luminosté en amp par le Lidar. Si cette valeur est supérieur à 65000 si mesure de distance n'est pas bonne.
+*
+* @return de type uint16_t retourne la luminosté en amp détecté par le Lidar.
+*/
+
 uint16_t getAmp()
 {
 	return amp;
 }
+
+/**
+* @brief Cette fonction s'agit d'un getter qui récupere la température du module en Celsius détecté par le Lidar.
+*
+* @return de type uint16_t retourne la température du module en Celsius détecté par le Lidar.
+*/
+
 uint16_t getTemp()
 {
 	return temp;
